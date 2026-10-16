@@ -49,10 +49,17 @@ const codeOutput = document.querySelector("#code-output");
 const pageSettings = document.querySelector("#page-settings");
 const pageBackground = document.querySelector("#page-background");
 const imageFile = document.querySelector("#image-file");
+const imageReplaceFile = document.querySelector("#image-replace-file");
 const bodyTools = document.querySelector("#body-tools");
 const layoutTools = document.querySelector("#layout-tools");
 const layoutGap = document.querySelector("#layout-gap");
 const layoutGapValue = document.querySelector("#layout-gap-value");
+const layoutWidth = document.querySelector("#layout-width");
+const layoutWidthValue = document.querySelector("#layout-width-value");
+const layoutHeight = document.querySelector("#layout-height");
+const layoutHeightValue = document.querySelector("#layout-height-value");
+const layoutWidthField = document.querySelector("#layout-width-field");
+const layoutHeightField = document.querySelector("#layout-height-field");
 const layoutPopover = document.querySelector("#layout-popover");
 const deleteSection = document.querySelector("#delete-section");
 const deleteButton = document.querySelector("#delete-selected");
@@ -60,6 +67,17 @@ const actionToast = document.querySelector("#action-toast");
 const actionToastMessage = document.querySelector("#action-toast-message");
 const undoDelete = document.querySelector("#undo-delete");
 const undoButton = document.querySelector("#undo-button");
+const imageAlt = document.querySelector("#image-alt");
+const imageWidth = document.querySelector("#image-width");
+const imageWidthValue = document.querySelector("#image-width-value");
+const imageMargin = document.querySelector("#image-margin");
+const imageMarginValue = document.querySelector("#image-margin-value");
+const imageRadius = document.querySelector("#image-radius");
+const imageRadiusValue = document.querySelector("#image-radius-value");
+const imageOffsetX = document.querySelector("#image-offset-x");
+const imageOffsetXValue = document.querySelector("#image-offset-x-value");
+const imageOffsetY = document.querySelector("#image-offset-y");
+const imageOffsetYValue = document.querySelector("#image-offset-y-value");
 const history = [];
 let pendingPreviewScrollTop = 0;
 const collapsedSections = new Set(["preset-tools", "decoration-tools"]);
@@ -138,6 +156,9 @@ function escapeHtml(value) {
 
 function cssFor(element) {
   const s = element.style;
+  const imageMargin = element.type === "image"
+    ? { left: `${s.margin}px auto ${s.margin}px 0`, center: `${s.margin}px auto`, right: `${s.margin}px 0 ${s.margin}px auto` }[s.imagePosition || "center"]
+    : `${s.margin}px auto`;
   const border = s.borderStyle === "double" ? `${Math.max(3, s.borderWidth)}px double ${s.borderColor}` : `${s.borderWidth}px solid ${s.borderColor}`;
   const shadows = [
     { none: "none", soft: "0 8px 20px rgba(30,52,79,.14)", strong: "0 12px 28px rgba(30,52,79,.28)" }[s.shadow],
@@ -153,10 +174,13 @@ function cssFor(element) {
     `text-align: ${s.textAlign};`,
     `line-height: ${s.lineHeight};`,
     `padding: ${s.padding}px;`,
-    `margin: ${s.margin}px auto;`,
+    `margin: ${imageMargin};`,
     `width: ${s.width}%;`,
     `border: ${border};`,
     `border-radius: ${s.borderRadius}px;`,
+    element.type === "image" ? "display: block;" : "",
+    element.type === "image" ? `object-fit: ${s.objectFit || "contain"};` : "",
+    element.type === "image" ? `transform: translate(${s.offsetX || 0}px, ${s.offsetY || 0}px);` : "",
     `box-shadow: ${shadows.length ? shadows.join(", ") : "none"};`,
   ].join(" ");
 }
@@ -194,6 +218,35 @@ function columnSelectionKey(groupId, column) {
   return `${groupId || "root"}::${column}`;
 }
 
+function selectedLayoutConfig() {
+  const group = model.groups.find((candidate) => candidate.id === model.selectedGroupId);
+  return group
+    ? { direction: group.direction, columns: group.columns, ratios: group.ratios }
+    : { direction: model.layoutDirection, columns: model.columns, ratios: model.layoutRatios };
+}
+
+function selectedLayoutRatio() {
+  const config = selectedLayoutConfig();
+  const index = config.columns.indexOf(model.selectedColumn);
+  if (index < 0 || config.columns.length < 2) return null;
+  const total = config.ratios.reduce((sum, ratio) => sum + ratio, 0) || config.columns.length;
+  return Math.round((config.ratios[index] / total) * 100);
+}
+
+function updateSelectedLayoutRatio(value) {
+  const config = selectedLayoutConfig();
+  const index = config.columns.indexOf(model.selectedColumn);
+  if (index < 0 || config.columns.length < 2) return;
+  pushHistory();
+  const selectedRatio = Number(value);
+  const remaining = Math.max(0, 100 - selectedRatio);
+  const otherCount = config.columns.length - 1;
+  config.columns.forEach((_, columnIndex) => {
+    config.ratios[columnIndex] = columnIndex === index ? selectedRatio : remaining / otherCount;
+  });
+  render();
+}
+
 function isColumnSelected(groupId, column) {
   return model.selectedColumns.includes(columnSelectionKey(groupId, column));
 }
@@ -210,7 +263,9 @@ function groupMarkup(group, { inlineStyles = false, preview = false } = {}) {
     const selectedColumn = isColumnSelected(group.id, column) ? " is-column-selected" : "";
     const guide = preview && isGuideTarget(group.id) ? " layout-guide-column" : "";
     const label = guide ? ` data-layout-label="${layoutColumnLabel(group.direction, columns.indexOf(column), columns.length)}"` : "";
-    return `      <div class="layout-column${active}${selectedColumn}${guide}" data-group-id="${group.id}" data-column-id="${column}"${label}>${parts}</div>`;
+    const ratio = group.ratios[columns.indexOf(column)] || 1;
+    const size = group.direction === "column" ? ` style="flex: 0 0 auto; min-height: ${Math.max(130, Math.round(ratio * 2))}px;"` : "";
+    return `      <div class="layout-column${active}${selectedColumn}${guide}" data-group-id="${group.id}" data-column-id="${column}"${label}${size}>${parts}</div>`;
   }).join("\n");
   const layoutClass = `nested-layout layout-split layout-${group.direction}`;
   return `    <div class="${layoutClass}" data-group-id="${group.id}">${columnMarkup}\n    </div>`;
@@ -229,7 +284,9 @@ function generatedHtml({ inlineStyles = false, preview = false } = {}) {
     const selectedColumn = isColumnSelected(null, column) ? " is-column-selected" : "";
     const guide = preview && isGuideTarget(null, true) ? " layout-guide-column" : "";
     const label = guide ? ` data-layout-label="${layoutColumnLabel(model.layoutDirection, columns.indexOf(column), columns.length)}"` : "";
-    return `    <div class="layout-column${active}${selectedColumn}${guide}" data-column-id="${column}"${label}>\n${parts}\n    </div>`;
+    const ratio = model.layoutRatios[columns.indexOf(column)] || 1;
+    const size = model.layoutDirection === "column" ? ` style="flex: 0 0 auto; min-height: ${Math.max(130, Math.round(ratio * 2))}px;"` : "";
+    return `    <div class="layout-column${active}${selectedColumn}${guide}" data-column-id="${column}"${label}${size}>\n${parts}\n    </div>`;
   }).join("\n");
   const layoutClass = columns.length > 1 ? `layout layout-split layout-${model.layoutDirection}` : "layout layout-single";
   return `<main class="page">\n  <section class="hero ${layoutClass}">\n${columnMarkup}\n  </section>\n</main>`;
@@ -237,7 +294,7 @@ function generatedHtml({ inlineStyles = false, preview = false } = {}) {
 
 function layoutDeclaration(direction, ratios, gap) {
   if (direction === "column") return `display:flex;flex-direction:column;gap:${gap}px;align-items:stretch;`;
-  return `display:grid;grid-template-columns:${ratios.map((ratio) => `minmax(0, ${ratio}fr)`).join(" ")};gap:${gap}px;align-items:start;`;
+  return `display:grid;grid-template-columns:${ratios.map((ratio) => `minmax(0, ${ratio}fr)`).join(" ")};gap:${gap}px;align-items:stretch;`;
 }
 
 function generatedCss() {
@@ -263,18 +320,41 @@ function syncControls() {
   const columnCount = model.selectedColumns.length;
   const layoutActive = count === 0 || count > 1;
   const activeGroup = model.groups.find((group) => group.id === model.selectedGroupId);
+  const editorType = count === 1 && element.type === "image" ? "image" : count === 1 ? "text" : "layout";
+  const editorTitle = { image: "画像の道具箱", text: element.type === "body" ? "本文の道具箱" : "見出しの道具箱", layout: "レイアウトの道具箱" }[editorType];
+  document.querySelector("#edit-heading").textContent = editorTitle;
+  document.querySelector("#edit-subheading").textContent = editorType === "image" ? "画像に必要な道具だけ表示します。" : editorType === "text" ? "文字に必要な道具だけ表示します。" : "選択中の場所に必要な道具だけ表示します。";
   document.querySelectorAll("[data-collapsible]").forEach((section) => section.setAttribute("aria-expanded", String(!collapsedSections.has(section.id))));
   pageBackground.value = model.page.backgroundColor;
   undoButton.disabled = history.length === 0;
   deleteSection.hidden = count === 0;
   deleteButton.textContent = count > 1 ? `🗑 選択した${count}個を削除` : "🗑 このパーツを削除";
   layoutTools.hidden = !layoutActive;
-  document.querySelectorAll(".right-panel > .customize-section:not(#layout-tools)").forEach((section) => { section.hidden = layoutActive; });
+  document.querySelectorAll(".right-panel > .customize-section[data-editor]").forEach((section) => { section.hidden = layoutActive || section.dataset.editor !== editorType; });
   document.querySelector("#layout-selection-count").textContent = columnCount > 1 ? `レイアウトの場所を${columnCount}つ選択中` : columnCount === 1 ? "選択中の場所" : count > 1 ? `${count}個選択中` : "ページの並び方";
   document.querySelector("#layout-help").textContent = columnCount > 1 ? "選んだ場所に、横長の段を追加できます。" : columnCount === 1 ? "この場所を左右・上下に分けられます。" : count > 1 ? "選んだパーツを、ひとつのまとまりとして並べます。" : "空白を選んで、パーツの並び方を決めます。点線は編集用の目印です。";
   document.querySelector("#layout-gap-field").hidden = activeGroup ? activeGroup.columns.length < 2 : model.columns.length < 2;
   layoutGap.value = activeGroup ? activeGroup.gap : model.layoutGap;
   layoutGapValue.value = `${layoutGap.value}px`;
+  const selectedRatio = selectedLayoutRatio();
+  const ratioEnabled = !hasSelection() && model.selectedColumns.length <= 1 && selectedRatio !== null;
+  const config = selectedLayoutConfig();
+  const widthEnabled = ratioEnabled && config.direction === "row";
+  const heightEnabled = false;
+  layoutWidth.disabled = !widthEnabled;
+  layoutHeight.disabled = !heightEnabled;
+  layoutWidth.setAttribute("aria-disabled", String(!widthEnabled));
+  layoutHeight.setAttribute("aria-disabled", String(!heightEnabled));
+  layoutWidthField.classList.toggle("is-disabled", !widthEnabled);
+  layoutHeightField.classList.toggle("is-disabled", !heightEnabled);
+  document.querySelector("#layout-dimension-note").textContent = !ratioEnabled
+    ? (hasSelection() ? "パーツを選択中です。カラムを選ぶと幅を調整できます。" : "1カラム、または複数選択中のため幅調整は使えません。")
+    : config.direction === "row" ? "左右分割なので、横幅だけ調整できます。"
+      : "上下分割の高さは、文字量と中身に合わせて自動で決まります。";
+  layoutWidth.value = selectedRatio ?? 50;
+  layoutWidthValue.value = selectedRatio === null ? "" : `${selectedRatio}%`;
+  layoutHeight.value = selectedRatio ?? 50;
+  layoutHeightValue.value = selectedRatio === null ? "" : `${selectedRatio}%`;
   document.querySelectorAll("[data-layout-action]").forEach((button) => {
     const action = button.dataset.layoutAction;
     button.textContent = count > 1 && action === "row" ? "↔ 左右に並べる" : count > 1 && action === "column" ? "↕ 上下に並べる" : action === "row" ? "↔ 左右に分ける" : action === "column" ? "↕ 上下に分ける" : "＋ ひとつに戻す";
@@ -306,6 +386,18 @@ function syncControls() {
   });
   document.querySelectorAll("[data-preset]").forEach((button) => button.classList.toggle("is-applied", button.dataset.preset === model.activePreset));
   document.querySelectorAll("[data-align]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.align === s.textAlign)));
+  imageAlt.value = element.type === "image" ? element.alt : "";
+  imageWidth.value = element.type === "image" ? element.style.width : 100;
+  imageWidthValue.value = element.type === "image" ? `${element.style.width}%` : "";
+  imageMargin.value = element.type === "image" ? element.style.margin : 0;
+  imageMarginValue.value = element.type === "image" ? `${element.style.margin}px` : "";
+  imageRadius.value = element.type === "image" ? element.style.borderRadius : 0;
+  imageRadiusValue.value = element.type === "image" ? `${element.style.borderRadius}px` : "";
+  imageOffsetX.value = element.type === "image" ? (element.style.offsetX || 0) : 0;
+  imageOffsetXValue.value = element.type === "image" ? `${element.style.offsetX || 0}px` : "";
+  imageOffsetY.value = element.type === "image" ? (element.style.offsetY || 0) : 0;
+  imageOffsetYValue.value = element.type === "image" ? `${element.style.offsetY || 0}px` : "";
+  document.querySelectorAll("[data-image-position]").forEach((button) => button.setAttribute("aria-pressed", String(element.type === "image" && (element.style.imagePosition || "center") === button.dataset.imagePosition)));
 }
 
 function render() {
@@ -334,11 +426,12 @@ frame.addEventListener("load", () => {
 
 function updateStyle(key, value) {
   if (!hasSelection()) return;
+  pushHistory();
   selectedElement().style[key] = value;
   render();
 }
 
-controls.content.addEventListener("input", (event) => { if (!hasSelection()) return; selectedElement().content = event.target.value; render(); });
+controls.content.addEventListener("input", (event) => { if (!hasSelection()) return; pushHistory(); selectedElement().content = event.target.value; render(); });
 controls.textColor.addEventListener("input", (event) => updateStyle("color", event.target.value));
 controls.backgroundColor.addEventListener("input", (event) => updateStyle("backgroundColor", event.target.value));
 controls.fontSize.addEventListener("input", (event) => updateStyle("fontSize", Number(event.target.value)));
@@ -351,6 +444,20 @@ controls.borderWidth.addEventListener("change", (event) => updateStyle("borderWi
 controls.borderColor.addEventListener("input", (event) => updateStyle("borderColor", event.target.value));
 controls.radius.addEventListener("input", (event) => updateStyle("borderRadius", Number(event.target.value)));
 document.querySelectorAll("[data-align]").forEach((button) => button.addEventListener("click", () => updateStyle("textAlign", button.dataset.align)));
+imageAlt.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { pushHistory(); selectedElement().alt = event.target.value; render(); } });
+imageWidth.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("width", Number(event.target.value)); } });
+imageMargin.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("margin", Number(event.target.value)); } });
+imageRadius.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("borderRadius", Number(event.target.value)); } });
+imageOffsetX.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("offsetX", Number(event.target.value)); } });
+imageOffsetY.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("offsetY", Number(event.target.value)); } });
+document.querySelectorAll("[data-image-position]").forEach((button) => button.addEventListener("click", () => {
+  if (!hasSelection() || selectedElement().type !== "image") return;
+  pushHistory();
+  const image = selectedElement();
+  image.style.imagePosition = button.dataset.imagePosition;
+  image.style.offsetX = 0;
+  render();
+}));
 
 const presets = {
   simple: { color: "#18222f", backgroundColor: "#ffffff", fontSize: 42, fontWeight: 700, textAlign: "left", padding: 24, margin: 0, width: 88, borderWidth: 0, borderRadius: 18, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
@@ -361,6 +468,8 @@ const presets = {
 };
 
 document.querySelectorAll("[data-preset]").forEach((button) => button.addEventListener("click", () => {
+  if (!hasSelection()) return;
+  pushHistory();
   Object.assign(selectedElement().style, presets[button.dataset.preset]);
   model.activePreset = button.dataset.preset;
   render();
@@ -385,8 +494,10 @@ document.querySelector("#page-menu-toggle").addEventListener("click", (event) =>
   event.currentTarget.setAttribute("aria-expanded", String(open));
 });
 pageBackground.addEventListener("input", (event) => { model.page.backgroundColor = event.target.value; render(); });
-document.querySelectorAll("[data-page-background]").forEach((button) => button.addEventListener("click", () => { model.page.backgroundColor = button.dataset.pageBackground; render(); }));
+document.querySelectorAll("[data-page-background]").forEach((button) => button.addEventListener("click", () => { pushHistory(); model.page.backgroundColor = button.dataset.pageBackground; render(); }));
 layoutGap.addEventListener("input", (event) => { if (model.selectedGroupId) { const group = model.groups.find((candidate) => candidate.id === model.selectedGroupId); if (group) group.gap = Number(event.target.value); } else model.layoutGap = Number(event.target.value); render(); });
+layoutWidth.addEventListener("input", (event) => { if (selectedLayoutConfig().direction === "row") updateSelectedLayoutRatio(event.target.value); });
+layoutHeight.addEventListener("input", (event) => { if (selectedLayoutConfig().direction === "column") updateSelectedLayoutRatio(event.target.value); });
 
 function applyLayout(direction) {
   const ids = model.selectedIds.filter((id) => model.elements.some((element) => element.id === id));
@@ -712,14 +823,21 @@ document.querySelectorAll("[data-layout-action]").forEach((button) => button.add
 }));
 document.querySelectorAll("[data-layout-template]").forEach((button) => button.addEventListener("click", () => applyLayoutTemplate(button.dataset.layoutTemplate)));
 
+function insertionTarget() {
+  const group = model.groups.find((candidate) => candidate.id === model.selectedGroupId);
+  if (group) {
+    return { groupId: group.id, column: group.columns.includes(model.selectedColumn) ? model.selectedColumn : group.columns[0] };
+  }
+  return { groupId: undefined, column: model.columns.includes(model.selectedColumn) ? model.selectedColumn : model.columns[0] };
+}
+
 function addTextPart(type) {
   const id = `${type}-${model.elements.length + 1}`;
   const bodyStyle = { color: "#334155", backgroundColor: "#ffffff", fontSize: 18, fontWeight: 400, textAlign: "left", lineHeight: 1.8, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
-  const column = model.selectedGroupId ? model.selectedColumn : model.columns.length > 1 ? model.selectedColumn : model.columns[0];
-  const groupId = model.selectedGroupId || undefined;
+  const { groupId, column } = insertionTarget();
   const template = type === "body" ? { id, type, column, groupId, format: "plain", content: "サービスの特徴や、お客さまへのメッセージをここに入力できます。", style: bodyStyle } : { ...structuredClone(initialModel.elements[0]), id, type, column, groupId, content: "ここに見出しを入力できます。" };
   model.elements.push(template);
-  if (model.selectedGroupId) model.groups.find((group) => group.id === model.selectedGroupId)?.elementIds.push(id);
+  if (groupId) model.groups.find((group) => group.id === groupId)?.elementIds.push(id);
   model.selectedIds = [id];
   render();
 }
@@ -751,21 +869,35 @@ document.querySelectorAll("[data-body-format]").forEach((button) => button.addEv
   selectedElement().format = button.dataset.bodyFormat;
   render();
 }));
-document.querySelector("#add-image").addEventListener("click", () => imageFile.click());
 imageFile.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
   const id = `image-${model.elements.length + 1}`;
   const reader = new FileReader();
   reader.addEventListener("load", () => {
-    const groupId = model.selectedGroupId || undefined;
-    const column = model.selectedGroupId ? model.selectedColumn : model.columns.length > 1 ? model.selectedColumn : model.columns[0];
-    model.elements.push({ id, type: "image", column, groupId, content: "", src: reader.result, alt: file.name.replace(/\\.[^.]+$/, ""), style: { color: "#18222f", backgroundColor: "transparent", fontSize: 16, fontWeight: 400, textAlign: "left", lineHeight: 1.4, padding: 0, margin: 16, width: 100, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" } });
-    if (model.selectedGroupId) model.groups.find((group) => group.id === model.selectedGroupId)?.elementIds.push(id);
+    const { groupId, column } = insertionTarget();
+    model.elements.push({ id, type: "image", column, groupId, content: "", src: reader.result, alt: file.name.replace(/\.[^.]+$/, ""), style: { color: "#18222f", backgroundColor: "transparent", fontSize: 16, fontWeight: 400, textAlign: "left", lineHeight: 1.4, padding: 0, margin: 16, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, imagePosition: "center", objectFit: "contain", offsetX: 0, offsetY: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" } });
+    if (groupId) model.groups.find((group) => group.id === groupId)?.elementIds.push(id);
     model.selectedIds = [id];
     event.target.value = "";
     render();
   });
+  reader.addEventListener("error", () => showToast("画像を読み込めませんでした"));
+  reader.readAsDataURL(file);
+});
+
+imageReplaceFile.addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+  if (!file || !hasSelection() || selectedElement().type !== "image") return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    pushHistory();
+    selectedElement().src = reader.result;
+    selectedElement().alt = file.name.replace(/\.[^.]+$/, "");
+    event.target.value = "";
+    render();
+  });
+  reader.addEventListener("error", () => showToast("画像を読み込めませんでした"));
   reader.readAsDataURL(file);
 });
 

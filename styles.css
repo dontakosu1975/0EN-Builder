@@ -83,6 +83,7 @@ button { cursor: pointer; }
 .part-card-primary:hover { border-color: var(--accent); transform: translateY(-1px); }
 .part-card-muted { opacity: .58; cursor: default; }
 .part-card em { color: var(--muted); font-size: 0.6rem; font-style: normal; }
+.file-input-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .add-button:hover, .secondary-button:hover { border-color: var(--accent); }
 .quiet-button { margin-top: auto; color: var(--muted); font-size: 0.78rem; }
 
@@ -98,6 +99,7 @@ button { cursor: pointer; }
 pre { overflow: auto; margin: 0; padding: 12px; border-radius: 9px; background: #17202d; color: #dbeafe; font: 0.72rem/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; }
 
 .right-panel { position: sticky; top: calc(var(--app-header-height) + 18px); align-self: start; display: flex; min-height: 0; height: calc(100vh - var(--app-header-height) - var(--app-footer-height) - 36px); flex-direction: column; gap: 14px; overflow-y: auto; }
+.customize-section[hidden] { display: none !important; }
 .customize-section { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; border-top: 1px solid var(--line); }
 .section-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .collapsible-title { cursor: pointer; user-select: none; }
@@ -123,6 +125,8 @@ pre { overflow: auto; margin: 0; padding: 12px; border-radius: 9px; background: 
 .image-element { display: block; height: auto; object-fit: cover; }
 .step-number { display: inline-grid; width: 20px; height: 20px; margin-right: 6px; place-items: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 0.68rem; }
 .field, .check-field { display: flex; flex-direction: column; gap: 7px; color: var(--muted); font-size: 0.76rem; font-weight: 700; }
+.field.is-disabled { opacity: .42; }
+.field.is-disabled input[type="range"] { cursor: not-allowed; }
 .field input[type="color"] { width: 100%; height: 34px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 textarea, select { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 9px; background: #fbfcfd; color: var(--ink); }
 textarea:focus, select:focus, input:focus-visible, button:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.2); outline-offset: 1px; }
