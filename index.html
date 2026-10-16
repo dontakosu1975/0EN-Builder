@@ -60,7 +60,6 @@
       <aside class="panel left-panel" aria-label="追加できるもの">
         <div class="panel-heading">
           <p class="eyebrow">できること</p>
-          <h2>この場所でできること</h2>
         </div>
         <section class="layout-start" aria-labelledby="layout-start-heading">
           <div class="section-title-row"><h3 id="layout-start-heading">レイアウト</h3><span class="section-hint">先に選ぶ</span></div>
@@ -85,7 +84,7 @@
         <button id="add-separator" class="part-card part-card-primary" type="button"><span class="part-icon">━</span><span><strong>区切り線</strong><small>ページに線を追加</small></span><b>＋</b></button>
         <button id="select-background" class="part-card part-card-primary" type="button"><span class="part-icon">▨</span><span><strong>背景</strong><small>ページ全体の背景を決める</small></span><b>＋</b></button>
         <button id="add-button" class="part-card part-card-primary" type="button"><span class="part-icon">▣</span><span><strong>ボタン</strong><small>行動を促すリンクを追加</small></span><b>＋</b></button>
-        <p class="helper-text">文章・画像・ボタンを追加できます。</p>
+        <button id="select-style" class="part-card part-card-primary" type="button"><span class="part-icon">✦</span><span><strong>見た目</strong><small>ページ全体の雰囲気を変える</small></span><b>＋</b></button>
         <button id="reset-page" class="quiet-button" type="button">最初の状態に戻す</button>
       </aside>
 
@@ -108,6 +107,19 @@
           <h2 id="edit-heading">選んだものの道具箱</h2>
           <p id="edit-subheading" class="helper-text compact">選択中のパーツに必要な道具だけ表示します。</p>
         </div>
+
+        <section id="style-tools" class="customize-section style-tools" hidden aria-labelledby="style-tools-heading">
+          <div class="section-title-row"><h3 id="style-tools-heading">ページ全体の見た目</h3><span class="section-hint">5つの見本</span></div>
+          <p class="helper-text compact">色・文字・枠・ボタンをまとめて変えられます。文章や配置は変わりません。</p>
+          <div class="style-preset-grid" role="group" aria-label="ページ全体のスタイルプリセット">
+            <button type="button" data-style-preset="casual"><span class="style-preset-sample style-sample-casual"><b>見出し</b><i></i><em>ボタン</em></span><strong>カジュアル</strong><small>親しみやすい</small></button>
+            <button type="button" data-style-preset="pop"><span class="style-preset-sample style-sample-pop"><b>見出し</b><i></i><em>ボタン</em></span><strong>ポップ</strong><small>元気で明るい</small></button>
+            <button type="button" data-style-preset="sweet"><span class="style-preset-sample style-sample-sweet"><b>見出し</b><i></i><em>ボタン</em></span><strong>スウィート</strong><small>やわらかく可愛い</small></button>
+            <button type="button" data-style-preset="blog"><span class="style-preset-sample style-sample-blog"><b>見出し</b><i></i><em>ボタン</em></span><strong>ブログ</strong><small>読みやすく落ち着く</small></button>
+            <button type="button" data-style-preset="business"><span class="style-preset-sample style-sample-business"><b>見出し</b><i></i><em>ボタン</em></span><strong>ビジネス</strong><small>整って信頼感</small></button>
+          </div>
+          <p class="helper-text compact">気に入らなければ、別の見本を選んで戻せます。</p>
+        </section>
 
         <section id="layout-tools" class="customize-section layout-tools" hidden aria-labelledby="layout-tools-heading">
           <div class="section-title-row"><h3 id="layout-tools-heading">レイアウトを整える</h3><span id="layout-selection-count" class="section-hint"></span></div>
@@ -145,18 +157,21 @@
         </section>
 
         <section id="preset-tools" class="customize-section" data-editor="text" data-collapsible aria-labelledby="preset-heading" aria-expanded="false">
-          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="preset-heading"><span class="step-number">1</span>まずは雰囲気を選ぶ</h3><span class="section-hint">プリセット</span></div>
+          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="preset-heading"><span class="tool-icon" aria-hidden="true">🔵</span>雰囲気を選ぶ</h3><span class="section-hint">見出しの見本</span></div>
           <div class="preset-grid" role="group" aria-label="雰囲気のプリセット">
             <button type="button" data-preset="simple"><span class="preset-sample sample-simple">あなたの<br />ページ</span><strong>シンプル</strong><small>すっきり、迷わない</small></button>
             <button type="button" data-preset="soft"><span class="preset-sample sample-soft">あなたの<br />ページ</span><strong>やわらかい</strong><small>親しみやすい</small></button>
             <button type="button" data-preset="business"><span class="preset-sample sample-business">あなたの<br />ページ</span><strong>ビジネス</strong><small>信頼感のある</small></button>
             <button type="button" data-preset="luxury"><span class="preset-sample sample-luxury">あなたの<br />ページ</span><strong>高級感</strong><small>落ち着いた</small></button>
             <button type="button" data-preset="pop"><span class="preset-sample sample-pop">あなたの<br />ページ</span><strong>ポップ</strong><small>楽しく元気な</small></button>
+            <button type="button" data-preset="cute"><span class="preset-sample sample-cute">あなたの<br />ページ</span><strong>かわいい</strong><small>やさしく丸い</small></button>
+            <button type="button" data-preset="underline"><span class="preset-sample sample-underline">あなたの<br />ページ</span><strong>アクセント</strong><small>線で目立たせる</small></button>
+            <button type="button" data-preset="modern"><span class="preset-sample sample-modern">あなたの<br />ページ</span><strong>モダン</strong><small>すっきり洗練</small></button>
           </div>
         </section>
 
         <section id="basic-tools" class="customize-section" data-editor="text button" data-collapsible aria-labelledby="basic-heading" aria-expanded="true">
-          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="basic-heading"><span class="step-number">2</span>基本</h3><span class="section-hint">文字の見た目</span></div>
+          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="basic-heading"><span class="tool-icon" aria-hidden="true">✎</span>基本</h3><span class="section-hint">文字の見た目</span></div>
         <label class="field field-wide">
           <span>文章</span>
           <textarea id="content-input" rows="4" aria-label="文章"></textarea>
@@ -177,7 +192,7 @@
           <div class="section-title-row"><h3 id="button-heading">ボタンの道具箱</h3><span class="section-hint">選択中のボタン</span></div>
           <label class="field field-wide"><span>ボタンの文字</span><input id="button-label" type="text" aria-label="ボタンの文字" /></label>
           <label class="field"><span>書体</span><select id="button-font-family" aria-label="ボタンの書体"><option value="system">標準ゴシック</option><option value="sans">Noto Sans JP</option><option value="serif">Noto Serif JP</option><option value="rounded">丸ゴシック</option></select></label>
-          <label class="field"><span>文字の太さ</span><select id="button-font-weight" aria-label="ボタンの文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="700">太い（B）</option><option value="900">とても太い（H）</option></select></label>
+          <label class="field"><span>文字の太さ</span><select id="button-font-weight" aria-label="ボタンの文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="600">太い（B）</option><option value="900">特太い（H）</option></select></label>
           <fieldset class="field-set">
             <legend>リンク先</legend>
             <select id="button-link-type" aria-label="リンク先の種類"><option value="url">外部URL</option><option value="anchor">このページの場所</option></select>
@@ -216,7 +231,7 @@
           <input id="font-size" type="range" min="16" max="72" step="1" aria-label="文字の大きさ" />
         </label>
 
-        <label class="field"><span>文字の太さ</span><select id="font-weight" aria-label="文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="700">太い（B）</option><option value="900">とても太い（H）</option></select></label>
+        <label class="field"><span>文字の太さ</span><select id="font-weight" aria-label="文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="600">太い（B）</option><option value="900">特太い（H）</option></select></label>
 
         <fieldset class="field-set">
           <legend>文字の揃え方</legend>
@@ -279,12 +294,14 @@
         </section>
 
         <section id="decoration-tools" class="customize-section" data-editor="text image button" data-collapsible aria-labelledby="decoration-heading" aria-expanded="false">
-          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="decoration-heading"><span class="step-number">3</span>装飾</h3><span class="section-hint">あとから足せます</span></div>
+          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="decoration-heading"><span class="tool-icon" aria-hidden="true">✦</span>装飾</h3><span class="section-hint">あとから足せます</span></div>
           <div class="decoration-list">
-            <div class="decoration-row"><span class="decoration-label">影をつける</span><div class="choice-grid" role="group" aria-label="影をつける"><button type="button" data-decoration="shadow:none">なし</button><button type="button" data-decoration="shadow:soft">薄い</button><button type="button" data-decoration="shadow:strong">くっきり</button></div></div>
+            <div class="decoration-row shadow-row"><div class="decoration-row-heading"><span class="decoration-label">枠に影をつける</span><button type="button" class="shadow-adjust-toggle" data-shadow-adjust="box" aria-expanded="false" aria-controls="box-shadow-adjust">微調整</button></div><div class="choice-grid" role="group" aria-label="枠に影をつける"><button type="button" data-decoration="shadow:none">なし</button><button type="button" data-decoration="shadow:soft">薄い</button><button type="button" data-decoration="shadow:strong">くっきり</button></div><div id="box-shadow-adjust" class="shadow-adjust-panel" hidden><label class="field"><span class="range-label"><span>左右</span><output id="shadow-offset-x-value"></output></span><span class="range-hint"><span>左</span><span>右</span></span><input id="shadow-offset-x" type="range" min="-20" max="20" step="1" aria-label="枠の影の左右位置" /></label><label class="field"><span class="range-label"><span>上下</span><output id="shadow-offset-y-value"></output></span><span class="range-hint"><span>上</span><span>下</span></span><input id="shadow-offset-y" type="range" min="-20" max="20" step="1" aria-label="枠の影の上下位置" /></label></div></div>
+            <div class="decoration-row shadow-row"><div class="decoration-row-heading"><span class="decoration-label">文字に影をつける</span><button type="button" class="shadow-adjust-toggle" data-shadow-adjust="text" aria-expanded="false" aria-controls="text-shadow-adjust">微調整</button></div><div class="choice-grid" role="group" aria-label="文字に影をつける"><button type="button" data-decoration="textShadow:none">なし</button><button type="button" data-decoration="textShadow:soft">薄い</button><button type="button" data-decoration="textShadow:strong">くっきり</button></div><div id="text-shadow-adjust" class="shadow-adjust-panel" hidden><label class="field"><span class="range-label"><span>左右</span><output id="text-shadow-offset-x-value"></output></span><span class="range-hint"><span>左</span><span>右</span></span><input id="text-shadow-offset-x" type="range" min="-20" max="20" step="1" aria-label="文字の影の左右位置" /></label><label class="field"><span class="range-label"><span>上下</span><output id="text-shadow-offset-y-value"></output></span><span class="range-hint"><span>上</span><span>下</span></span><input id="text-shadow-offset-y" type="range" min="-20" max="20" step="1" aria-label="文字の影の上下位置" /></label></div></div>
             <div class="decoration-row"><span class="decoration-label">立体感をつける</span><div class="choice-grid" role="group" aria-label="立体感をつける"><button type="button" data-decoration="depth:none">なし</button><button type="button" data-decoration="depth:emboss">浮き出し</button><button type="button" data-decoration="depth:inset">へこみ</button></div></div>
             <div class="decoration-row"><span class="decoration-label">枠をつける</span><div class="choice-grid" role="group" aria-label="枠をつける"><button type="button" data-decoration="borderStyle:none">なし</button><button type="button" data-decoration="borderStyle:solid">細い線</button><button type="button" data-decoration="borderStyle:double">二重線</button></div></div>
             <div class="decoration-row"><span class="decoration-label">光らせる</span><div class="choice-grid" role="group" aria-label="光らせる"><button type="button" data-decoration="glow:none">なし</button><button type="button" data-decoration="glow:soft">ぼんやり</button><button type="button" data-decoration="glow:strong">強く</button></div></div>
+            <div class="decoration-row text-stroke-row"><span class="decoration-label">袋文字</span><div class="choice-grid" role="group" aria-label="袋文字"><button type="button" data-decoration="textStrokeWidth:0">なし</button><button type="button" data-decoration="textStrokeWidth:1">細い</button><button type="button" data-decoration="textStrokeWidth:2">ふつう</button><button type="button" data-decoration="textStrokeWidth:3">太い</button></div><label class="field"><span>袋文字の色</span><input id="text-stroke-color" type="color" aria-label="袋文字の色" /></label></div>
           </div>
         </section>
 

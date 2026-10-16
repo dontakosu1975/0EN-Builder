@@ -48,10 +48,11 @@ const initialModel = {
 const model = structuredClone(initialModel);
 model.activePreset = "simple";
 model.selectedColumn = "left";
-model.selectedIds = ["hero-title"];
+model.selectedIds = [];
 model.selectedGroupId = null;
 model.selectedColumns = [];
 model.selectedBackground = false;
+model.selectedStyle = true;
 const frame = document.querySelector("#preview-frame");
 const projectSetup = document.querySelector("#project-setup");
 const projectSetupForm = document.querySelector("#project-setup-form");
@@ -71,6 +72,7 @@ const loadProjectFile = document.querySelector("#load-project-file");
 const bodyTools = document.querySelector("#body-tools");
 const buttonTools = document.querySelector("#button-tools");
 const layoutTools = document.querySelector("#layout-tools");
+const styleTools = document.querySelector("#style-tools");
 const layoutGap = document.querySelector("#layout-gap");
 const layoutGapValue = document.querySelector("#layout-gap-value");
 const layoutWidth = document.querySelector("#layout-width");
@@ -125,9 +127,63 @@ const imageOffsetX = document.querySelector("#image-offset-x");
 const imageOffsetXValue = document.querySelector("#image-offset-x-value");
 const imageOffsetY = document.querySelector("#image-offset-y");
 const imageOffsetYValue = document.querySelector("#image-offset-y-value");
+const textStrokeColor = document.querySelector("#text-stroke-color");
+const shadowOffsetX = document.querySelector("#shadow-offset-x");
+const shadowOffsetXValue = document.querySelector("#shadow-offset-x-value");
+const shadowOffsetY = document.querySelector("#shadow-offset-y");
+const shadowOffsetYValue = document.querySelector("#shadow-offset-y-value");
+const textShadowOffsetX = document.querySelector("#text-shadow-offset-x");
+const textShadowOffsetXValue = document.querySelector("#text-shadow-offset-x-value");
+const textShadowOffsetY = document.querySelector("#text-shadow-offset-y");
+const textShadowOffsetYValue = document.querySelector("#text-shadow-offset-y-value");
 const history = [];
 let pendingPreviewScrollTop = 0;
 const collapsedSections = new Set(["preset-tools", "decoration-tools"]);
+let styleHistoryOpen = false;
+let styleHistoryTimer = null;
+
+const stylePresetDefinitions = {
+  casual: {
+    page: "#f4f8fc",
+    heading: { color: "#18222f", backgroundColor: "#ffffff", fontFamily: "system", fontWeight: 700, borderWidth: 0, borderRadius: 18, shadow: "soft", depth: "none", borderStyle: "none", glow: "none" },
+    body: { color: "#405064", backgroundColor: "#ffffff", fontFamily: "system", fontWeight: 400, borderWidth: 0, borderRadius: 14, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    button: { color: "#ffffff", backgroundColor: "#2563eb", fontFamily: "system", fontWeight: 700, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" },
+    image: { borderWidth: 0, borderColor: "#d7e3f2", borderRadius: 14, shadow: "soft", depth: "none", borderStyle: "none", glow: "none" },
+    separator: { borderColor: "#c9d8ea", borderWidth: 1, borderStyle: "solid" },
+  },
+  pop: {
+    page: "#fffaf2",
+    heading: { color: "#2b1d1a", backgroundColor: "#fff3d6", fontFamily: "rounded", fontWeight: 900, borderWidth: 3, borderColor: "#ff8a3d", borderRadius: 18, shadow: "none", depth: "hard", borderStyle: "solid", glow: "none" },
+    body: { color: "#553b35", backgroundColor: "#ffffff", fontFamily: "rounded", fontWeight: 400, borderWidth: 2, borderColor: "#ffd1a8", borderRadius: 14, shadow: "none", depth: "none", borderStyle: "solid", glow: "none" },
+    button: { color: "#ffffff", backgroundColor: "#f05a28", fontFamily: "rounded", fontWeight: 900, borderWidth: 3, borderColor: "#b93a18", borderRadius: 14, shadow: "none", depth: "hard", borderStyle: "solid", glow: "none" },
+    image: { borderWidth: 4, borderColor: "#ffb15c", borderRadius: 18, shadow: "none", depth: "hard", borderStyle: "solid", glow: "none" },
+    separator: { borderColor: "#ff8a3d", borderWidth: 3, borderStyle: "solid" },
+  },
+  sweet: {
+    page: "#fff7fb",
+    heading: { color: "#604650", backgroundColor: "#fff0f6", fontFamily: "rounded", fontWeight: 700, borderWidth: 1, borderColor: "#efb7cc", borderRadius: 24, shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" },
+    body: { color: "#725d65", backgroundColor: "#ffffff", fontFamily: "rounded", fontWeight: 400, borderWidth: 1, borderColor: "#f2d5df", borderRadius: 20, shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" },
+    button: { color: "#ffffff", backgroundColor: "#df8eaa", fontFamily: "rounded", fontWeight: 700, borderWidth: 0, borderColor: "#c56f8e", borderRadius: 999, shadow: "soft", depth: "none", borderStyle: "none", glow: "none" },
+    image: { borderWidth: 2, borderColor: "#efb7cc", borderRadius: 24, shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" },
+    separator: { borderColor: "#efb7cc", borderWidth: 1, borderStyle: "solid" },
+  },
+  blog: {
+    page: "#ffffff",
+    heading: { color: "#252a31", backgroundColor: "transparent", fontFamily: "serif", fontWeight: 700, borderWidth: 0, borderColor: "#596575", borderRadius: 4, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    body: { color: "#39424e", backgroundColor: "transparent", fontFamily: "serif", fontWeight: 400, borderWidth: 0, borderColor: "#596575", borderRadius: 4, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    button: { color: "#ffffff", backgroundColor: "#4a5568", fontFamily: "serif", fontWeight: 700, borderWidth: 0, borderColor: "#374151", borderRadius: 4, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    image: { borderWidth: 0, borderColor: "#cbd5e1", borderRadius: 4, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    separator: { borderColor: "#cbd5e1", borderWidth: 1, borderStyle: "solid" },
+  },
+  business: {
+    page: "#f5f7fa",
+    heading: { color: "#172033", backgroundColor: "#ffffff", fontFamily: "sans", fontWeight: 700, borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 6, shadow: "none", depth: "none", borderStyle: "solid", glow: "none" },
+    body: { color: "#475569", backgroundColor: "#ffffff", fontFamily: "sans", fontWeight: 400, borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 6, shadow: "none", depth: "none", borderStyle: "solid", glow: "none" },
+    button: { color: "#ffffff", backgroundColor: "#1d4ed8", fontFamily: "sans", fontWeight: 700, borderWidth: 0, borderColor: "#1e40af", borderRadius: 6, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    image: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 6, shadow: "none", depth: "none", borderStyle: "solid", glow: "none" },
+    separator: { borderColor: "#cbd5e1", borderWidth: 1, borderStyle: "solid" },
+  },
+};
 
 projectSetupForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -165,7 +221,26 @@ document.addEventListener("click", (event) => { if (!contextMenu.hidden && !cont
 document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeContextMenu(); });
 
 function snapshotModel() {
-  return structuredClone({ page: model.page, layout: model.layout, layoutDirection: model.layoutDirection, layoutGap: model.layoutGap, layoutRatios: model.layoutRatios, columns: model.columns, groups: model.groups, elements: model.elements, selectedIds: model.selectedIds, selectedColumn: model.selectedColumn, selectedGroupId: model.selectedGroupId, selectedColumns: model.selectedColumns, selectedBackground: model.selectedBackground, activePreset: model.activePreset });
+  return structuredClone({ page: model.page, layout: model.layout, layoutDirection: model.layoutDirection, layoutGap: model.layoutGap, layoutRatios: model.layoutRatios, columns: model.columns, groups: model.groups, elements: model.elements, selectedIds: model.selectedIds, selectedColumn: model.selectedColumn, selectedGroupId: model.selectedGroupId, selectedColumns: model.selectedColumns, selectedBackground: model.selectedBackground, selectedStyle: model.selectedStyle, activePreset: model.activePreset, activeStylePreset: model.activeStylePreset || "" });
+}
+
+function applyStylePreset(name) {
+  const preset = stylePresetDefinitions[name];
+  if (!preset) return;
+  pushHistory();
+  model.page.backgroundColor = preset.page;
+  model.elements.forEach((element) => {
+    const partStyle = preset[element.type];
+    if (partStyle) Object.assign(element.style, partStyle);
+  });
+  model.activeStylePreset = name;
+  model.selectedStyle = true;
+  model.selectedBackground = false;
+  model.selectedIds = [];
+  model.selectedColumns = [];
+  model.selectedGroupId = null;
+  render();
+  showToast(`「${document.querySelector(`[data-style-preset="${name}"] strong`)?.textContent || name}」を適用しました`);
 }
 
 function anchorHtmlId(anchor) {
@@ -310,17 +385,27 @@ function cssFor(element) {
       : `${s.margin}px auto`;
   const border = s.borderStyle === "double" ? `${Math.max(3, s.borderWidth)}px double ${s.borderColor}` : `${s.borderWidth}px solid ${s.borderColor}`;
   const shadows = [
-    { none: "none", soft: "0 8px 20px rgba(30,52,79,.14)", strong: "0 12px 28px rgba(30,52,79,.28)" }[s.shadow],
+    { none: "none", soft: `${Number(s.shadowOffsetX || 0)}px ${8 + Number(s.shadowOffsetY || 0)}px 20px rgba(30,52,79,.14)`, strong: `${Number(s.shadowOffsetX || 0)}px ${12 + Number(s.shadowOffsetY || 0)}px 28px rgba(30,52,79,.28)` }[s.shadow],
     { none: "", emboss: "inset 0 2px 0 rgba(255,255,255,.72), inset 0 -2px 0 rgba(20,35,55,.16)", inset: "inset 0 3px 5px rgba(20,35,55,.2)" }[s.depth],
   ].filter(Boolean);
   const glow = { none: "", soft: "0 0 10px rgba(96,165,250,.4)", strong: "0 0 18px rgba(96,165,250,.75)" }[s.glow];
   if (glow) shadows.push(glow);
+  const textShadowX = Number(s.textShadowOffsetX || 0);
+  const textShadowY = Number(s.textShadowOffsetY || 0);
+  const textShadow = { none: "none", soft: `${1 + textShadowX}px ${2 + textShadowY}px 4px rgba(30,52,79,.32)`, strong: `${2 + textShadowX}px ${3 + textShadowY}px 1px rgba(30,52,79,.45)` }[s.textShadow || "none"];
+  const textStrokeWidth = ["heading", "body", "button"].includes(element.type) ? Number(s.textStrokeWidth || 0) : 0;
+  const textStrokeColor = s.textStrokeColor || "#ffffff";
+  const textStrokeShadow = textStrokeWidth > 0
+    ? [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].map(([x, y]) => `${x * textStrokeWidth}px ${y * textStrokeWidth}px 0 ${textStrokeColor}`).join(", ")
+    : "";
+  const combinedTextShadow = [textStrokeShadow, textShadow !== "none" ? textShadow : ""].filter(Boolean).join(", ") || "none";
   return [
     `color: ${s.color};`,
     `font-family: ${fontFamilyFor(s.fontFamily)};`,
     `background-color: ${effectiveBackgroundColor};`,
     `font-size: ${s.fontSize}px;`,
     `font-weight: ${s.fontWeight};`,
+    `text-shadow: ${combinedTextShadow};`,
     `text-align: ${s.textAlign};`,
     ["heading", "body"].includes(element.type) ? "display: flex; flex-direction: column;" : "",
     ["heading", "body"].includes(element.type) ? `justify-content: ${{ top: "flex-start", center: "center", bottom: "flex-end" }[s.verticalAlign || "top"]};` : "",
@@ -514,12 +599,12 @@ function syncControls() {
   const s = element.style;
   const count = selectionCount();
   const columnCount = model.selectedColumns.length;
-  const layoutActive = !model.selectedBackground && (count === 0 || count > 1);
+  const layoutActive = !model.selectedStyle && !model.selectedBackground && (count === 0 || count > 1);
   const activeGroup = model.groups.find((group) => group.id === model.selectedGroupId);
-  const editorType = model.selectedBackground ? "background" : count === 1 && element.type === "image" ? "image" : count === 1 && element.type === "separator" ? "separator" : count === 1 && element.type === "button" ? "button" : count === 1 ? "text" : "layout";
-  const editorTitle = { background: "背景の道具箱", image: "画像の道具箱", separator: "区切り線の道具箱", button: "ボタンの道具箱", text: element.type === "body" ? "本文の道具箱" : "見出しの道具箱", layout: "レイアウトの道具箱" }[editorType];
+  const editorType = model.selectedStyle ? "style" : model.selectedBackground ? "background" : count === 1 && element.type === "image" ? "image" : count === 1 && element.type === "separator" ? "separator" : count === 1 && element.type === "button" ? "button" : count === 1 ? "text" : "layout";
+  const editorTitle = { style: "ページ全体の見た目", background: "背景の道具箱", image: "画像の道具箱", separator: "区切り線の道具箱", button: "ボタンの道具箱", text: element.type === "body" ? "本文の道具箱" : "見出しの道具箱", layout: "レイアウトの道具箱" }[editorType];
   document.querySelector("#edit-heading").textContent = editorTitle;
-  document.querySelector("#edit-subheading").textContent = editorType === "background" ? "ページ全体の背景に必要な道具だけ表示します。" : editorType === "image" ? "画像に必要な道具だけ表示します。" : editorType === "separator" ? "区切り線に必要な道具だけ表示します。" : editorType === "button" ? "ボタンに必要な道具だけ表示します。" : editorType === "text" ? "文字に必要な道具だけ表示します。" : "選択中の場所に必要な道具だけ表示します。";
+  document.querySelector("#edit-subheading").textContent = editorType === "style" ? "ページ全体の見た目をあとから変更できます。" : editorType === "background" ? "ページ全体の背景に必要な道具だけ表示します。" : editorType === "image" ? "画像に必要な道具だけ表示します。" : editorType === "separator" ? "区切り線に必要な道具だけ表示します。" : editorType === "button" ? "ボタンに必要な道具だけ表示します。" : editorType === "text" ? "文字に必要な道具だけ表示します。" : "選択中の場所に必要な道具だけ表示します。";
   document.querySelectorAll("[data-collapsible]").forEach((section) => section.setAttribute("aria-expanded", String(!collapsedSections.has(section.id))));
   pageBackground.value = model.page.backgroundColor;
   backgroundSize.value = model.page.backgroundSize;
@@ -528,6 +613,7 @@ function syncControls() {
   deleteSection.hidden = count === 0;
   deleteButton.textContent = count > 1 ? `🗑 選択した${count}個を削除` : "🗑 このパーツを削除";
   layoutTools.hidden = !layoutActive;
+  styleTools.hidden = editorType !== "style";
   document.querySelectorAll(".right-panel > .customize-section[data-editor]").forEach((section) => { section.hidden = layoutActive || !section.dataset.editor.split(/\s+/).includes(editorType); });
   document.querySelector("#layout-selection-count").textContent = columnCount > 1 ? `レイアウトの場所を${columnCount}つ選択中` : columnCount === 1 ? "選択中の場所" : count > 1 ? `${count}個選択中` : "ページの並び方";
   document.querySelector("#layout-help").textContent = columnCount > 1 ? "選んだ場所に、横長の段を追加できます。" : columnCount === 1 ? "この場所を左右・上下に分けられます。" : count > 1 ? "選んだパーツを、ひとつのまとまりとして並べます。" : "空白を選んで、パーツの並び方を決めます。点線は編集用の目印です。";
@@ -574,7 +660,7 @@ function syncControls() {
   controls.fontSize.value = s.fontSize;
   controls.fontSizeValue.value = `${s.fontSize}px`;
   controls.fontFamily.value = s.fontFamily || "system";
-  controls.fontWeight.value = String(s.fontWeight || 400);
+  controls.fontWeight.value = [300, 400, 500, 600, 900].includes(Number(s.fontWeight)) ? String(s.fontWeight) : Number(s.fontWeight) >= 700 ? "600" : "400";
   controls.lineHeight.value = s.lineHeight;
   controls.lineHeightValue.value = s.lineHeight;
   controls.padding.value = s.padding;
@@ -589,9 +675,20 @@ function syncControls() {
   controls.radiusValue.value = `${s.borderRadius}px`;
   document.querySelectorAll("[data-decoration]").forEach((button) => {
     const [key, value] = button.dataset.decoration.split(":");
-    button.setAttribute("aria-pressed", String(s[key] === value));
+    button.setAttribute("aria-pressed", String(String(s[key] ?? (key === "textStrokeWidth" ? 0 : "")) === value));
   });
+  textStrokeColor.value = s.textStrokeColor || "#ffffff";
+  textStrokeColor.disabled = !Number(s.textStrokeWidth || 0);
+  shadowOffsetX.value = s.shadowOffsetX || 0;
+  shadowOffsetXValue.value = `${s.shadowOffsetX || 0}px`;
+  shadowOffsetY.value = s.shadowOffsetY || 0;
+  shadowOffsetYValue.value = `${s.shadowOffsetY || 0}px`;
+  textShadowOffsetX.value = s.textShadowOffsetX || 0;
+  textShadowOffsetXValue.value = `${s.textShadowOffsetX || 0}px`;
+  textShadowOffsetY.value = s.textShadowOffsetY || 0;
+  textShadowOffsetYValue.value = `${s.textShadowOffsetY || 0}px`;
   document.querySelectorAll("[data-preset]").forEach((button) => button.classList.toggle("is-applied", button.dataset.preset === model.activePreset));
+  document.querySelectorAll("[data-style-preset]").forEach((button) => button.classList.toggle("is-applied", button.dataset.stylePreset === model.activeStylePreset));
   document.querySelectorAll("[data-align]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.align === s.textAlign)));
   document.querySelectorAll("[data-valign]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.valign === (s.verticalAlign || "top"))));
   imageAlt.value = element.type === "image" ? element.alt : "";
@@ -620,7 +717,7 @@ function syncControls() {
   buttonTargetBlank.checked = isButton && element.target === "blank";
   buttonTextColor.value = isButton ? element.style.color : "#ffffff";
   buttonFontFamily.value = isButton ? (element.style.fontFamily || "system") : "system";
-  buttonFontWeight.value = isButton ? String(element.style.fontWeight || 700) : "700";
+  buttonFontWeight.value = isButton ? ([300, 400, 500, 600, 900].includes(Number(element.style.fontWeight)) ? String(element.style.fontWeight) : Number(element.style.fontWeight) >= 700 ? "600" : "400") : "600";
   buttonBackgroundColor.value = isButton ? element.style.backgroundColor : "#2563eb";
   buttonWidth.value = isButton ? element.style.width : 88;
   buttonWidthValue.value = isButton ? `${element.style.width}%` : "";
@@ -644,25 +741,69 @@ function render() {
   const rightPanelScrollTop = rightPanel?.scrollTop || 0;
   syncControls();
   frame.srcdoc = previewDocument();
-  const selectionLabel = hasSelection()
+  const selectionLabel = model.selectedStyle
+    ? "ページ全体の見た目"
+    : hasSelection()
     ? selectedElement().type === "body" ? "本文" : selectedElement().type === "image" ? "画像" : selectedElement().type === "separator" ? "区切り線" : selectedElement().type === "button" ? "ボタン" : "見出し"
     : "レイアウト";
   document.querySelector("#selection-status").textContent = selectionCount() > 1 ? `${selectionCount()}個のパーツを選択中` : `${selectionLabel}を選択中`;
   document.querySelector("#footer-element-count").textContent = model.elements.length;
-  document.querySelector("#footer-selection").textContent = selectionCount() > 1 ? `${selectionCount()}個のパーツ` : hasSelection() ? (selectedElement().type === "body" ? "本文" : selectedElement().type === "image" ? "画像" : selectedElement().type === "separator" ? "区切り線" : selectedElement().type === "button" ? "ボタン" : "見出し") : "レイアウト";
+  document.querySelector("#footer-selection").textContent = model.selectedStyle ? "ページ全体の見た目" : selectionCount() > 1 ? `${selectionCount()}個のパーツ` : hasSelection() ? (selectedElement().type === "body" ? "本文" : selectedElement().type === "image" ? "画像" : selectedElement().type === "separator" ? "区切り線" : selectedElement().type === "button" ? "ボタン" : "見出し") : "レイアウト";
   requestAnimationFrame(() => {
     if (documentScroller) documentScroller.scrollTop = pageScrollTop;
     if (rightPanel) rightPanel.scrollTop = rightPanelScrollTop;
   });
 }
 
+function beginStyleHistory() {
+  if (!styleHistoryOpen) {
+    pushHistory();
+    styleHistoryOpen = true;
+  }
+  clearTimeout(styleHistoryTimer);
+  styleHistoryTimer = setTimeout(() => { styleHistoryOpen = false; }, 300);
+}
+
+function patchPreviewElement(element) {
+  const previewElement = frame.contentDocument?.getElementById(element.id);
+  if (!previewElement) return false;
+  previewElement.style.cssText = cssFor(element);
+  return true;
+}
+
+function patchPreviewContent(element) {
+  const previewElement = frame.contentDocument?.getElementById(element.id);
+  if (!previewElement) return false;
+  if (element.type === "body" && element.format === "list") {
+    previewElement.replaceChildren(...element.content.split(/\r?\n/).filter(Boolean).map((line) => {
+      const item = frame.contentDocument.createElement("li");
+      item.textContent = line;
+      return item;
+    }));
+  } else if (element.type === "body" && element.format === "strong") {
+    const strong = frame.contentDocument.createElement("strong");
+    strong.textContent = element.content;
+    previewElement.replaceChildren(strong);
+  } else {
+    previewElement.textContent = element.content;
+  }
+  return true;
+}
+
 frame.addEventListener("load", () => {
+  const selectionStyle = frame.contentDocument?.createElement("style");
+  if (selectionStyle) {
+    selectionStyle.textContent = ".text-element.is-selected{outline:2px solid #5f8ee8!important;outline-offset:5px!important}.text-element.is-selected-2{outline-color:#2563eb!important}.text-element.is-selected-3{outline-color:#7c3aed!important}";
+    frame.contentDocument.head.appendChild(selectionStyle);
+  }
   const id = selectionCount() === 1 ? model.selectedIds[0] : null;
   if (id) frame.contentWindow?.postMessage({ type: "focus", id }, "*");
   else frame.contentWindow?.postMessage({ type: "restore-scroll", top: pendingPreviewScrollTop }, "*");
   frame.contentDocument?.addEventListener("keydown", handleUndoShortcut, true);
 });
 
+const rawPreviewDocument = previewDocument;
+previewDocument = () => rawPreviewDocument().replace(".text-element.is-selected{outline:3px solid #111827;outline-offset:6px}", ".text-element.is-selected{outline:2px solid #5f8ee8;outline-offset:5px}");
 const basePreviewDocument = previewDocument;
 const previewDragScript = `
 (function(){
@@ -720,9 +861,10 @@ previewDocument = () => basePreviewDocument().replace("</script></body></html>",
 
 function updateStyle(key, value) {
   if (!hasSelection()) return;
-  pushHistory();
-  selectedElement().style[key] = value;
-  render();
+  beginStyleHistory();
+  const element = selectedElement();
+  element.style[key] = value;
+  if (!patchPreviewElement(element)) render();
 }
 
 function moveElementTo(elementId, targetGroupId, targetColumn, referenceId, insertBefore) {
@@ -814,7 +956,7 @@ function setupPreviewDragAndDrop() {
   });
 }
 
-controls.content.addEventListener("input", (event) => { if (!hasSelection()) return; pushHistory(); selectedElement().content = event.target.value; render(); });
+controls.content.addEventListener("input", (event) => { if (!hasSelection()) return; beginStyleHistory(); const element = selectedElement(); element.content = event.target.value; if (!patchPreviewContent(element)) render(); });
 controls.textColor.addEventListener("input", (event) => updateStyle("color", event.target.value));
 controls.backgroundColor.addEventListener("input", (event) => { controls.backgroundNone.checked = false; updateStyle("backgroundColor", event.target.value); });
 controls.backgroundNone.addEventListener("change", (event) => updateStyle("backgroundColor", event.target.checked ? "transparent" : controls.backgroundColor.value));
@@ -836,9 +978,10 @@ function updateButton(change) {
 }
 function updateButtonStyle(key, value) {
   if (!hasSelection() || selectedElement().type !== "button") return;
-  pushHistory();
-  selectedElement().style[key] = value;
-  render();
+  beginStyleHistory();
+  const element = selectedElement();
+  element.style[key] = value;
+  if (!patchPreviewElement(element)) render();
 }
 buttonLabel.addEventListener("input", (event) => updateButton({ content: event.target.value }));
 buttonLinkType.addEventListener("change", (event) => updateButton({ linkType: event.target.value, anchorId: event.target.value === "anchor" ? selectedElement().anchorId || "" : "" }));
@@ -884,6 +1027,9 @@ const presets = {
   business: { color: "#102a43", backgroundColor: "#ffffff", fontSize: 38, fontWeight: 700, textAlign: "left", padding: 20, margin: 0, width: 92, borderWidth: 2, borderRadius: 6, shadow: "none", depth: "none", borderStyle: "solid", glow: "none" },
   luxury: { color: "#f8fafc", backgroundColor: "#1e293b", fontSize: 44, fontWeight: 700, textAlign: "center", padding: 34, margin: 0, width: 88, borderWidth: 1, borderRadius: 12, shadow: "strong", depth: "none", borderStyle: "solid", glow: "none" },
   pop: { color: "#7c2d12", backgroundColor: "#fed7aa", fontSize: 46, fontWeight: 700, textAlign: "center", padding: 28, margin: 0, width: 86, borderWidth: 4, borderRadius: 30, shadow: "soft", depth: "emboss", borderStyle: "solid", glow: "none" },
+  cute: { color: "#6b4352", backgroundColor: "#fff0f6", fontSize: 42, fontWeight: 700, textAlign: "center", padding: 28, margin: 0, width: 88, borderWidth: 1, borderColor: "#efb7cc", borderRadius: 28, shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" },
+  underline: { color: "#1e293b", backgroundColor: "transparent", fontSize: 42, fontWeight: 700, textAlign: "left", padding: 16, margin: 0, width: 92, borderWidth: 0, borderColor: "#2563eb", borderRadius: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+  modern: { color: "#111827", backgroundColor: "#f8fafc", fontSize: 40, fontWeight: 900, textAlign: "left", padding: 22, margin: 0, width: 90, borderWidth: 0, borderRadius: 4, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
 };
 
 document.querySelectorAll("[data-preset]").forEach((button) => button.addEventListener("click", () => {
@@ -896,7 +1042,18 @@ document.querySelectorAll("[data-preset]").forEach((button) => button.addEventLi
 
 document.querySelectorAll("[data-decoration]").forEach((button) => button.addEventListener("click", () => {
   const [key, value] = button.dataset.decoration.split(":");
-  updateStyle(key, value);
+  updateStyle(key, key === "textStrokeWidth" ? Number(value) : value);
+}));
+textStrokeColor.addEventListener("input", (event) => { if (hasSelection() && ["heading", "body", "button"].includes(selectedElement().type)) updateStyle("textStrokeColor", event.target.value); });
+shadowOffsetX.addEventListener("input", (event) => updateStyle("shadowOffsetX", Number(event.target.value)));
+shadowOffsetY.addEventListener("input", (event) => updateStyle("shadowOffsetY", Number(event.target.value)));
+textShadowOffsetX.addEventListener("input", (event) => updateStyle("textShadowOffsetX", Number(event.target.value)));
+textShadowOffsetY.addEventListener("input", (event) => updateStyle("textShadowOffsetY", Number(event.target.value)));
+document.querySelectorAll("[data-shadow-adjust]").forEach((button) => button.addEventListener("click", () => {
+  const panel = document.querySelector(`#${button.getAttribute("aria-controls")}`);
+  const open = panel.hidden;
+  panel.hidden = !open;
+  button.setAttribute("aria-expanded", String(open));
 }));
 
 document.querySelector("#footer-source-button").addEventListener("click", () => {
@@ -997,6 +1154,7 @@ loadProjectFile.addEventListener("change", (event) => {
       pushHistory();
       Object.assign(model, saved);
       model.page = { ...structuredClone(initialModel.page), ...saved.page };
+      model.selectedStyle = saved.selectedStyle === true;
       model.selectedBackground = false;
       document.querySelector("#app-page-title").textContent = model.page.title;
       document.querySelector("#footer-page-title").textContent = model.page.title;
@@ -1060,6 +1218,7 @@ loadHtmlFile.addEventListener("change", (event) => {
     model.layoutDirection = "row";
     model.layoutRatios = [1];
     model.selectedIds = [model.elements[0].id];
+    model.selectedStyle = false;
     model.selectedBackground = false;
     document.querySelector("#app-page-title").textContent = model.page.title;
     document.querySelector("#footer-page-title").textContent = model.page.title;
@@ -1477,6 +1636,7 @@ function addTextPart(type) {
   const template = type === "body" ? { id, type, column, groupId, format: "plain", content: "サービスの特徴や、お客さまへのメッセージをここに入力できます。", style: bodyStyle } : { ...structuredClone(initialModel.elements[0]), id, type, column, groupId, content: "ここに見出しを入力できます。" };
   model.elements.push(template);
   if (groupId) model.groups.find((group) => group.id === groupId)?.elementIds.push(id);
+  model.selectedStyle = false;
   model.selectedBackground = false;
   model.selectedIds = [id];
   render();
@@ -1489,6 +1649,7 @@ function addSeparatorPart() {
   const separatorStyle = { color: "#18222f", backgroundColor: "transparent", fontSize: 16, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.4, padding: 0, margin: 16, width: 88, borderWidth: 1, borderColor: "#b9d0ff", borderRadius: 0, borderStyle: "solid", shadow: "none", depth: "none", glow: "none" };
   model.elements.push({ id, type: "separator", column, groupId, content: "", style: separatorStyle });
   if (groupId) model.groups.find((group) => group.id === groupId)?.elementIds.push(id);
+  model.selectedStyle = false;
   model.selectedBackground = false;
   model.selectedIds = [id];
   render();
@@ -1501,6 +1662,7 @@ function addButtonPart() {
   const buttonStyle = { color: "#ffffff", backgroundColor: "#2563eb", fontFamily: "system", fontSize: 16, fontWeight: 700, textAlign: "center", verticalAlign: "center", lineHeight: 1.4, padding: 12, margin: 12, width: 48, height: 48, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, buttonAlign: "center", shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" };
   model.elements.push({ id, type: "button", column, groupId, content: "お問い合わせ", url: "", linkType: "url", anchorId: "", target: "same", style: buttonStyle });
   if (groupId) model.groups.find((group) => group.id === groupId)?.elementIds.push(id);
+  model.selectedStyle = false;
   model.selectedBackground = false;
   model.selectedIds = [id];
   render();
@@ -1511,13 +1673,24 @@ document.querySelector("#add-body").addEventListener("click", () => addTextPart(
 addSeparator.addEventListener("click", addSeparatorPart);
 addButton.addEventListener("click", addButtonPart);
 document.querySelector("#select-background").addEventListener("click", () => {
+  model.selectedStyle = false;
   model.selectedBackground = true;
   model.selectedIds = [];
   model.selectedColumns = [];
   model.selectedGroupId = null;
   render();
 });
+document.querySelector("#select-style").addEventListener("click", () => {
+  model.selectedStyle = true;
+  model.selectedBackground = false;
+  model.selectedIds = [];
+  model.selectedColumns = [];
+  model.selectedGroupId = null;
+  render();
+});
+document.querySelectorAll("[data-style-preset]").forEach((button) => button.addEventListener("click", () => applyStylePreset(button.dataset.stylePreset)));
 document.querySelector("#layout-card").addEventListener("click", () => {
+  model.selectedStyle = false;
   model.selectedBackground = false;
   model.selectedIds = [];
   model.selectedColumns = [];
@@ -1552,6 +1725,7 @@ imageFile.addEventListener("change", (event) => {
     const { groupId, column } = insertionTarget();
     model.elements.push({ id, type: "image", column, groupId, content: "", src: reader.result, alt: file.name.replace(/\.[^.]+$/, ""), style: { color: "#18222f", backgroundColor: "transparent", fontSize: 16, fontWeight: 400, textAlign: "left", lineHeight: 1.4, padding: 0, margin: 16, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, imagePosition: "center", objectFit: "contain", offsetX: 0, offsetY: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" } });
     if (groupId) model.groups.find((group) => group.id === groupId)?.elementIds.push(id);
+    model.selectedStyle = false;
     model.selectedBackground = false;
     model.selectedIds = [id];
     event.target.value = "";
@@ -1585,12 +1759,14 @@ document.querySelector("#reset-page").addEventListener("click", () => {
   model.columns = structuredClone(initialModel.columns);
   model.groups = [];
   model.elements = structuredClone(initialModel.elements);
-  model.selectedIds = [initialModel.selectedId];
+  model.selectedIds = [];
+  model.selectedStyle = true;
   model.selectedBackground = false;
   model.selectedColumns = [];
   model.selectedColumn = "left";
   model.selectedGroupId = null;
   model.activePreset = "simple";
+  model.activeStylePreset = "";
   render();
 });
 
@@ -1607,6 +1783,7 @@ window.addEventListener("message", (event) => {
   } else if (event.data?.type === "edit-end") {
     render();
   } else if (event.data?.type === "select" && model.elements.some((element) => element.id === event.data.id)) {
+    model.selectedStyle = false;
     model.selectedBackground = false;
     model.selectedIds = event.data.shift ? model.selectedIds.includes(event.data.id) ? model.selectedIds.filter((id) => id !== event.data.id) : [...model.selectedIds, event.data.id] : [event.data.id];
     model.selectedColumn = event.data.column || model.elements.find((element) => element.id === event.data.id)?.column || "left";
@@ -1614,6 +1791,7 @@ window.addEventListener("message", (event) => {
     model.selectedColumns = [];
     render();
   } else if (event.data?.type === "select-column" && (model.columns.includes(event.data.column) || event.data.groupId)) {
+    model.selectedStyle = false;
     model.selectedBackground = false;
     model.selectedColumn = event.data.column;
     model.selectedGroupId = event.data.groupId || null;
@@ -1627,6 +1805,7 @@ window.addEventListener("message", (event) => {
   } else if (event.data?.type === "preview-scroll") {
     pendingPreviewScrollTop = Number(event.data.top) || 0;
   } else if (event.data?.type === "context-menu" && !event.data.id && event.data.column) {
+    model.selectedStyle = false;
     model.selectedBackground = false;
     model.selectedIds = [];
     model.selectedGroupId = event.data.groupId || null;
@@ -1636,6 +1815,7 @@ window.addEventListener("message", (event) => {
     openContextMenu({ groupId: event.data.groupId || null, column: event.data.column, x: rect.left + Number(event.data.x || 0), y: rect.top + Number(event.data.y || 0) });
     render();
   } else if (event.data?.type === "clear-selection") {
+    model.selectedStyle = true;
     model.selectedBackground = false;
     model.selectedIds = [];
     model.selectedColumns = [];
