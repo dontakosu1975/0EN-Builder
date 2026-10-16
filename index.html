@@ -8,28 +8,51 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <section id="project-setup" class="project-setup" aria-labelledby="project-setup-heading">
+      <div class="project-setup-card">
+        <p class="eyebrow">0EN BUILDER</p>
+        <h1 id="project-setup-heading">新しいホームページを作る</h1>
+        <p class="project-setup-lead">まずは、このページの名前を決めましょう。あとから内容や見た目を組み立てていきます。</p>
+        <form id="project-setup-form" class="project-setup-form">
+          <label class="project-setup-field">
+            <span>ファイル名</span>
+            <input id="project-filename" name="filename" type="text" value="my-homepage.html" placeholder="my-homepage.html" required />
+            <small>保存するときに使う名前です。</small>
+          </label>
+          <label class="project-setup-field">
+            <span>ページタイトル</span>
+            <input id="project-title" name="title" type="text" value="はじめてのペライチ" placeholder="例：わたしのホームページ" required />
+            <small>ブラウザのタイトルやページ名に使います。</small>
+          </label>
+          <button class="project-setup-submit" type="submit">このページを作りはじめる <span>→</span></button>
+        </form>
+      </div>
+    </section>
     <header class="app-header">
-      <div>
-        <p class="eyebrow">0EN Builder / PoC 01</p>
-        <h1>はじめてのペライチ</h1>
+      <div class="app-title-area">
+        <button id="page-menu-toggle" class="page-menu-button page-menu-icon" type="button" aria-label="ページ設定を開く" aria-expanded="false">☰</button>
+        <div>
+          <p class="eyebrow">0EN Builder / PoC 01</p>
+          <h1 id="app-page-title">はじめてのペライチ</h1>
+        </div>
       </div>
       <div class="header-actions">
-        <button id="page-menu-toggle" class="page-menu-button" type="button" aria-expanded="false">☰ <span>ページ設定</span></button>
-        <p class="header-note">中央の文章をクリックして、見たままに整えられます。</p>
+        <div class="header-file-actions" aria-label="保存と書き出し">
+          <button id="save-project" class="page-menu-button" type="button">プロジェクトを保存</button>
+          <button id="load-project" class="page-menu-button" type="button">プロジェクトを開く</button>
+          <button id="load-html" class="page-menu-button" type="button">HTMLを読み込む</button>
+          <button id="export-html" class="page-menu-button page-menu-button-primary" type="button">完成ページを書き出す</button>
+          <input id="load-html-file" class="file-input-hidden" type="file" accept=".html,.htm,text/html,image/*" webkitdirectory directory multiple aria-label="HTMLとimagesフォルダを読み込む" />
+          <input id="load-project-file" class="file-input-hidden" type="file" accept=".json,.0en.json,application/json" aria-label="プロジェクトJSONを開く" />
+        </div>
+        <p class="header-note">プロジェクトは再編集用、完成ページは公開用に保存します。</p>
       </div>
     </header>
 
     <section id="page-settings" class="page-settings" hidden aria-label="ページ設定">
       <div class="page-settings-inner">
-        <div><p class="eyebrow">PAGE SETTINGS</p><h2>ページの基本設定</h2></div>
-        <label class="page-setting-field"><span>ページの背景</span><input id="page-background" type="color" aria-label="ページの背景" /></label>
-        <div class="page-swatches" role="group" aria-label="ページ背景の候補">
-          <button type="button" data-page-background="#f7f9fc">やわらかい</button>
-          <button type="button" data-page-background="#ffffff">白</button>
-          <button type="button" data-page-background="#eef6ff">空色</button>
-          <button type="button" data-page-background="#fff7ed">あたたかい</button>
-        </div>
-        <span class="page-setting-note">ページ全体の背景です。パーツの背景色は右側から変更できます。</span>
+        <div><p class="eyebrow">ページ設定</p><h2>ページの基本設定</h2></div>
+        <span class="page-setting-note">ファイル名とタイトルを設定します。</span>
       </div>
     </section>
 
@@ -59,15 +82,17 @@
         <button id="add-body" class="part-card part-card-primary" type="button"><span class="part-icon">¶</span><span><strong>本文</strong><small>説明文を追加</small></span><b>＋</b></button>
         <label id="add-image" class="part-card part-card-primary" for="image-file"><span class="part-icon">▧</span><span><strong>画像</strong><small>写真やイラストを追加</small></span><b>＋</b></label>
         <input id="image-file" class="file-input-hidden" type="file" accept="image/*" aria-label="画像ファイルを選択" />
-        <div class="part-card part-card-muted"><span class="part-icon">▣</span><span><strong>ボタン</strong><small>行動を促す</small></span><em>次の段階</em></div>
-        <p class="helper-text">文章や画像を追加できます。ボタンは次の段階で追加します。</p>
+        <button id="add-separator" class="part-card part-card-primary" type="button"><span class="part-icon">━</span><span><strong>区切り線</strong><small>ページに線を追加</small></span><b>＋</b></button>
+        <button id="select-background" class="part-card part-card-primary" type="button"><span class="part-icon">▨</span><span><strong>背景</strong><small>ページ全体の背景を決める</small></span><b>＋</b></button>
+        <button id="add-button" class="part-card part-card-primary" type="button"><span class="part-icon">▣</span><span><strong>ボタン</strong><small>行動を促すリンクを追加</small></span><b>＋</b></button>
+        <p class="helper-text">文章・画像・ボタンを追加できます。</p>
         <button id="reset-page" class="quiet-button" type="button">最初の状態に戻す</button>
       </aside>
 
       <section class="canvas-column" aria-label="ライブプレビュー">
         <div class="canvas-toolbar">
           <div>
-            <p class="eyebrow">LIVE PREVIEW</p>
+            <p class="eyebrow">ライブプレビュー</p>
             <h2>ページ</h2>
           </div>
           <span id="selection-status" class="status-pill">文章を選択中</span>
@@ -75,26 +100,11 @@
         <div class="preview-frame-wrap">
           <iframe id="preview-frame" title="作成中のページプレビュー" sandbox="allow-scripts"></iframe>
         </div>
-        <div class="code-section">
-          <div class="code-heading">
-            <div>
-              <p class="eyebrow">OUTPUT</p>
-              <h2>生成されたHTML/CSS</h2>
-            </div>
-            <button id="toggle-code" class="secondary-button" type="button" aria-expanded="false">HTMLを見る</button>
-          </div>
-          <div id="code-output" class="code-output" hidden>
-            <h3>HTML</h3>
-            <pre><code id="html-output"></code></pre>
-            <h3>CSS</h3>
-            <pre><code id="css-output"></code></pre>
-          </div>
-        </div>
       </section>
 
       <aside class="panel right-panel" aria-label="選択中の要素の設定">
         <div class="panel-heading">
-          <p class="eyebrow">EDIT</p>
+            <p class="eyebrow">編集</p>
           <h2 id="edit-heading">選んだものの道具箱</h2>
           <p id="edit-subheading" class="helper-text compact">選択中のパーツに必要な道具だけ表示します。</p>
         </div>
@@ -102,6 +112,11 @@
         <section id="layout-tools" class="customize-section layout-tools" hidden aria-labelledby="layout-tools-heading">
           <div class="section-title-row"><h3 id="layout-tools-heading">レイアウトを整える</h3><span id="layout-selection-count" class="section-hint"></span></div>
           <p id="layout-help" class="helper-text compact">完成形を選ぶと、その場所に適用されます。</p>
+          <div class="anchor-tool">
+            <label class="field field-wide"><span>この場所に名前をつける</span><input id="layout-anchor-name" type="text" placeholder="例：お問い合わせ" aria-label="この場所の名前" /></label>
+            <button id="save-layout-anchor" class="secondary-button" type="button">名前を設定</button>
+            <small class="helper-text compact">ボタンのリンク先として選べるようになります。</small>
+          </div>
           <div class="layout-pattern-grid layout-pattern-grid-edit" role="group" aria-label="レイアウトを選ぶ">
             <button type="button" data-layout-template="single"><span class="pattern-preview pattern-single"><i></i></span><strong>ひとつ</strong></button>
             <button type="button" data-layout-template="two"><span class="pattern-preview pattern-two"><i></i><i></i></span><strong>左右に2つ</strong></button>
@@ -140,12 +155,13 @@
           </div>
         </section>
 
-        <section id="basic-tools" class="customize-section" data-editor="text" data-collapsible aria-labelledby="basic-heading" aria-expanded="true">
-          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="basic-heading"><span class="step-number">2</span>基本</h3><span class="section-hint">顔・髪型・体格</span></div>
+        <section id="basic-tools" class="customize-section" data-editor="text button" data-collapsible aria-labelledby="basic-heading" aria-expanded="true">
+          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="basic-heading"><span class="step-number">2</span>基本</h3><span class="section-hint">文字の見た目</span></div>
         <label class="field field-wide">
           <span>文章</span>
           <textarea id="content-input" rows="4" aria-label="文章"></textarea>
         </label>
+        <label class="field"><span>書体</span><select id="font-family" aria-label="書体"><option value="system">標準ゴシック</option><option value="sans">Noto Sans JP</option><option value="serif">Noto Serif JP</option><option value="rounded">丸ゴシック</option></select></label>
 
         <section id="body-tools" class="body-tools" hidden aria-label="本文を整える">
           <div class="section-title-row"><h3>文章を整える</h3><span class="section-hint">本文だけ</span></div>
@@ -155,6 +171,29 @@
             <button type="button" data-body-format="list">箇条書き</button>
           </div>
           <p class="helper-text compact">文章を改行して入力すると、箇条書きでは1行ずつ項目になります。</p>
+        </section>
+
+        <section id="button-tools" class="customize-section" data-editor="button" hidden aria-labelledby="button-heading">
+          <div class="section-title-row"><h3 id="button-heading">ボタンの道具箱</h3><span class="section-hint">選択中のボタン</span></div>
+          <label class="field field-wide"><span>ボタンの文字</span><input id="button-label" type="text" aria-label="ボタンの文字" /></label>
+          <label class="field"><span>書体</span><select id="button-font-family" aria-label="ボタンの書体"><option value="system">標準ゴシック</option><option value="sans">Noto Sans JP</option><option value="serif">Noto Serif JP</option><option value="rounded">丸ゴシック</option></select></label>
+          <label class="field"><span>文字の太さ</span><select id="button-font-weight" aria-label="ボタンの文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="700">太い（B）</option><option value="900">とても太い（H）</option></select></label>
+          <fieldset class="field-set">
+            <legend>リンク先</legend>
+            <select id="button-link-type" aria-label="リンク先の種類"><option value="url">外部URL</option><option value="anchor">このページの場所</option></select>
+          </fieldset>
+          <label id="button-url-field" class="field field-wide"><span>URL</span><input id="button-url" type="url" placeholder="https://example.com" aria-label="リンク先URL" /></label>
+          <label id="button-anchor-field" class="field field-wide" hidden><span>ページ内の場所</span><select id="button-anchor" aria-label="ページ内リンクの場所"><option value="">場所を選択</option></select></label>
+          <label class="check-field"><input id="button-target-blank" type="checkbox" aria-label="新しいタブで開く" /><span>新しいタブで開く</span></label>
+          <div class="field-grid">
+            <label class="field"><span>文字の色</span><input id="button-text-color" type="color" aria-label="ボタンの文字の色" /></label>
+            <label class="field"><span>ボタンの色</span><input id="button-background-color" type="color" aria-label="ボタンの色" /></label>
+          </div>
+          <fieldset class="field-set"><legend>配置</legend><div class="segmented" role="group" aria-label="ボタンの配置"><button type="button" data-button-align="left">左</button><button type="button" data-button-align="center">中央</button><button type="button" data-button-align="right">右</button></div></fieldset>
+          <label class="field"><span class="range-label"><span>横幅</span><output id="button-width-value"></output></span><input id="button-width" type="range" min="20" max="100" step="1" aria-label="ボタンの横幅" /></label>
+          <label class="field"><span class="range-label"><span>縦幅</span><output id="button-height-value"></output></span><input id="button-height" type="range" min="8" max="80" step="1" aria-label="ボタンの縦幅" /></label>
+          <label class="field"><span class="range-label"><span>角の丸み</span><output id="button-radius-value"></output></span><input id="button-radius" type="range" min="0" max="48" step="1" aria-label="ボタンの角の丸み" /></label>
+          <div class="field-grid"><label class="field"><span>枠線</span><select id="button-border-width" aria-label="ボタンの枠線"><option value="0">なし</option><option value="1">細い</option><option value="2">ふつう</option><option value="4">太い</option></select></label><label class="field"><span>枠線の色</span><input id="button-border-color" type="color" aria-label="ボタンの枠線の色" /></label></div>
         </section>
 
         <div class="field-grid">
@@ -167,16 +206,17 @@
             <input id="background-color" type="color" aria-label="背景の色" />
           </label>
         </div>
+        <label class="check-field">
+          <input id="background-none" type="checkbox" aria-label="パーツの背景なし" />
+          <span>パーツの背景なし</span>
+        </label>
 
         <label class="field">
           <span class="range-label"><span>文字の大きさ</span><output id="font-size-value"></output></span><span class="range-hint"><span>小さめ</span><span>大きめ</span></span>
           <input id="font-size" type="range" min="16" max="72" step="1" aria-label="文字の大きさ" />
         </label>
 
-        <label class="check-field">
-          <input id="font-weight" type="checkbox" aria-label="太字" />
-          <span>太字にする</span>
-        </label>
+        <label class="field"><span>文字の太さ</span><select id="font-weight" aria-label="文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="700">太い（B）</option><option value="900">とても太い（H）</option></select></label>
 
         <fieldset class="field-set">
           <legend>文字の揃え方</legend>
@@ -184,6 +224,15 @@
             <button type="button" data-align="left">左揃え</button>
             <button type="button" data-align="center">中央揃え</button>
             <button type="button" data-align="right">右揃え</button>
+          </div>
+        </fieldset>
+
+        <fieldset class="field-set">
+          <legend>縦の揃え方</legend>
+          <div class="segmented" role="group" aria-label="縦の揃え方">
+            <button type="button" data-valign="top">上</button>
+            <button type="button" data-valign="center">中央</button>
+            <button type="button" data-valign="bottom">下</button>
           </div>
         </fieldset>
 
@@ -229,7 +278,7 @@
         </label>
         </section>
 
-        <section id="decoration-tools" class="customize-section" data-editor="text" data-collapsible aria-labelledby="decoration-heading" aria-expanded="false">
+        <section id="decoration-tools" class="customize-section" data-editor="text image button" data-collapsible aria-labelledby="decoration-heading" aria-expanded="false">
           <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="decoration-heading"><span class="step-number">3</span>装飾</h3><span class="section-hint">あとから足せます</span></div>
           <div class="decoration-list">
             <div class="decoration-row"><span class="decoration-label">影をつける</span><div class="choice-grid" role="group" aria-label="影をつける"><button type="button" data-decoration="shadow:none">なし</button><button type="button" data-decoration="shadow:soft">薄い</button><button type="button" data-decoration="shadow:strong">くっきり</button></div></div>
@@ -279,10 +328,59 @@
             <span class="range-hint"><span>カクカク</span><span>まるい</span></span>
             <input id="image-radius" type="range" min="0" max="48" step="1" aria-label="画像の角の丸み" />
           </label>
+          <div class="field-grid">
+            <label class="field">
+              <span>枠線</span>
+              <select id="image-border-width" aria-label="画像の枠線">
+                <option value="0">なし</option>
+                <option value="1">細い</option>
+                <option value="2">ふつう</option>
+                <option value="4">太い</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>枠線の色</span>
+              <input id="image-border-color" type="color" aria-label="画像の枠線の色" />
+            </label>
+          </div>
         </section>
 
         <section id="delete-section" class="delete-section" hidden aria-label="パーツの操作">
           <button id="delete-selected" class="delete-button" type="button">🗑 このパーツを削除</button>
+        </section>
+
+        <section id="separator-tools" class="customize-section" data-editor="separator" aria-labelledby="separator-heading">
+          <div class="section-title-row"><h3 id="separator-heading">区切り線の道具箱</h3><span class="section-hint">選択中の区切り線</span></div>
+          <label class="field">
+            <span class="range-label"><span>線の幅</span><output id="separator-width-value"></output></span>
+            <input id="separator-width" type="range" min="20" max="100" step="1" aria-label="区切り線の幅" />
+          </label>
+          <div class="field-grid">
+            <label class="field">
+              <span>線の太さ</span>
+              <select id="separator-thickness" aria-label="区切り線の太さ"><option value="1">細い</option><option value="2">ふつう</option><option value="4">太い</option></select>
+            </label>
+            <label class="field">
+              <span>線の色</span>
+              <input id="separator-color" type="color" aria-label="区切り線の色" />
+            </label>
+          </div>
+          <label class="field">
+            <span>線の種類</span>
+            <select id="separator-style" aria-label="区切り線の種類"><option value="solid">実線</option><option value="dashed">破線</option><option value="double">二重線</option></select>
+          </label>
+        </section>
+
+        <section id="background-tools" class="customize-section" data-editor="background" aria-labelledby="background-heading">
+          <div class="section-title-row"><h3 id="background-heading">背景の道具箱</h3><span class="section-hint">ページ全体</span></div>
+          <div class="field-grid">
+            <label class="field"><span>背景色</span><input id="page-background" type="color" aria-label="ページの背景色" /></label>
+            <div class="field"><span>候補</span><div class="page-swatches" role="group" aria-label="ページ背景の候補"><button type="button" data-page-background="#f7f9fc">やわらかい</button><button type="button" data-page-background="#ffffff">白</button><button type="button" data-page-background="#eef6ff">空色</button><button type="button" data-page-background="#fff7ed">あたたかい</button></div></div>
+          </div>
+          <label class="part-card part-card-primary replace-image-card" for="background-file"><span class="part-icon">▧</span><span><strong>背景画像を追加</strong><small>画像を置き換える</small></span></label>
+          <input id="background-file" class="file-input-hidden" type="file" accept="image/*" aria-label="背景画像を追加" />
+          <label class="field"><span>画像の表示</span><select id="background-size" aria-label="背景画像の表示"><option value="cover">枠いっぱい</option><option value="contain">全体を表示</option><option value="repeat">敷き詰める</option></select></label>
+          <label class="field"><span>画像の位置</span><select id="background-position" aria-label="背景画像の位置"><option value="left top">左上</option><option value="center top">中央上</option><option value="right top">右上</option><option value="left center">左中央</option><option value="center">中央</option><option value="right center">右中央</option><option value="left bottom">左下</option><option value="center bottom">中央下</option><option value="right bottom">右下</option></select></label>
         </section>
       </aside>
     </main>
@@ -295,10 +393,16 @@
       <span class="footer-spacer"></span>
       <span class="footer-status"><i></i><strong id="footer-save-status">編集中</strong></span>
       <button id="undo-button" class="footer-action-button" type="button" disabled>↶ 元に戻す <span>Ctrl+Z</span></button>
-      <button id="footer-code-button" class="footer-code-button" type="button">HTMLを見る</button>
+      <button id="footer-source-button" class="footer-code-button" type="button">ソースを見る</button>
+      <button id="footer-preview-button" class="footer-action-button" type="button">HTMLを見る</button>
     </footer>
 
     <div id="action-toast" class="action-toast" hidden><span id="action-toast-message"></span><button id="undo-delete" type="button">元に戻す</button></div>
+    <div id="context-menu" class="context-menu" hidden role="menu" aria-label="この場所の操作">
+      <button type="button" data-context-action="anchor-add" role="menuitem">この場所に名前をつける</button>
+      <button type="button" data-context-action="anchor-edit" role="menuitem">名前を変更</button>
+      <button type="button" data-context-action="anchor-remove" role="menuitem">この名前を削除</button>
+    </div>
 
     <script src="app.js"></script>
   </body>
