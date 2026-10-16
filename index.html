@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>0EN Builder PoC 01</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">0EN Builder / PoC 01</p>
+        <h1>はじめてのペライチ</h1>
+      </div>
+      <div class="header-actions">
+        <button id="page-menu-toggle" class="page-menu-button" type="button" aria-expanded="false">☰ <span>ページ設定</span></button>
+        <p class="header-note">中央の文章をクリックして、見たままに整えられます。</p>
+      </div>
+    </header>
+
+    <section id="page-settings" class="page-settings" hidden aria-label="ページ設定">
+      <div class="page-settings-inner">
+        <div><p class="eyebrow">PAGE SETTINGS</p><h2>ページの基本設定</h2></div>
+        <label class="page-setting-field"><span>ページの背景</span><input id="page-background" type="color" aria-label="ページの背景" /></label>
+        <div class="page-swatches" role="group" aria-label="ページ背景の候補">
+          <button type="button" data-page-background="#f7f9fc">やわらかい</button>
+          <button type="button" data-page-background="#ffffff">白</button>
+          <button type="button" data-page-background="#eef6ff">空色</button>
+          <button type="button" data-page-background="#fff7ed">あたたかい</button>
+        </div>
+        <span class="page-setting-note">ページ全体の背景です。パーツの背景色は右側から変更できます。</span>
+      </div>
+    </section>
+
+    <main class="builder-shell">
+      <aside class="panel left-panel" aria-label="追加できるもの">
+        <div class="panel-heading">
+          <p class="eyebrow">できること</p>
+          <h2>この場所でできること</h2>
+        </div>
+        <section class="layout-start" aria-labelledby="layout-start-heading">
+          <div class="section-title-row"><h3 id="layout-start-heading">レイアウト</h3><span class="section-hint">先に選ぶ</span></div>
+          <button id="add-two-columns" class="layout-card" type="button"><span class="layout-preview"><i></i><i></i></span><span><strong>2カラム</strong><small>左右に分けて配置</small></span><b>＋</b></button>
+        </section>
+        <button id="add-text" class="part-card part-card-primary" type="button"><span class="part-icon">T</span><span><strong>見出し</strong><small>大きな文字を追加</small></span><b>＋</b></button>
+        <button id="add-body" class="part-card part-card-primary" type="button"><span class="part-icon">¶</span><span><strong>本文</strong><small>説明文を追加</small></span><b>＋</b></button>
+        <button id="add-image" class="part-card part-card-primary" type="button"><span class="part-icon">▧</span><span><strong>画像</strong><small>写真やイラストを追加</small></span><b>＋</b></button>
+        <input id="image-file" type="file" accept="image/*" hidden />
+        <div class="part-card part-card-muted"><span class="part-icon">▣</span><span><strong>ボタン</strong><small>行動を促す</small></span><em>次の段階</em></div>
+        <p class="helper-text">PoCでは文章だけを扱います。画像やボタンは次の段階で追加します。</p>
+        <button id="reset-page" class="quiet-button" type="button">最初の状態に戻す</button>
+      </aside>
+
+      <section class="canvas-column" aria-label="ライブプレビュー">
+        <div class="canvas-toolbar">
+          <div>
+            <p class="eyebrow">LIVE PREVIEW</p>
+            <h2>ページ</h2>
+          </div>
+          <span id="selection-status" class="status-pill">文章を選択中</span>
+        </div>
+        <div class="preview-frame-wrap">
+          <iframe id="preview-frame" title="作成中のページプレビュー" sandbox="allow-scripts"></iframe>
+        </div>
+        <div class="code-section">
+          <div class="code-heading">
+            <div>
+              <p class="eyebrow">OUTPUT</p>
+              <h2>生成されたHTML/CSS</h2>
+            </div>
+            <button id="toggle-code" class="secondary-button" type="button" aria-expanded="false">HTMLを見る</button>
+          </div>
+          <div id="code-output" class="code-output" hidden>
+            <h3>HTML</h3>
+            <pre><code id="html-output"></code></pre>
+            <h3>CSS</h3>
+            <pre><code id="css-output"></code></pre>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel right-panel" aria-label="選択中の要素の設定">
+        <div class="panel-heading">
+          <p class="eyebrow">EDIT</p>
+          <h2>文章のキャラクリ</h2>
+        </div>
+
+        <section class="customize-section" aria-labelledby="preset-heading">
+          <div class="section-title-row"><h3 id="preset-heading"><span class="step-number">1</span>まずは雰囲気を選ぶ</h3><span class="section-hint">プリセット</span></div>
+          <div class="preset-grid" role="group" aria-label="雰囲気のプリセット">
+            <button type="button" data-preset="simple"><span class="preset-sample sample-simple">あなたの<br />ページ</span><strong>シンプル</strong><small>すっきり、迷わない</small></button>
+            <button type="button" data-preset="soft"><span class="preset-sample sample-soft">あなたの<br />ページ</span><strong>やわらかい</strong><small>親しみやすい</small></button>
+            <button type="button" data-preset="business"><span class="preset-sample sample-business">あなたの<br />ページ</span><strong>ビジネス</strong><small>信頼感のある</small></button>
+            <button type="button" data-preset="luxury"><span class="preset-sample sample-luxury">あなたの<br />ページ</span><strong>高級感</strong><small>落ち着いた</small></button>
+            <button type="button" data-preset="pop"><span class="preset-sample sample-pop">あなたの<br />ページ</span><strong>ポップ</strong><small>楽しく元気な</small></button>
+          </div>
+        </section>
+
+        <section class="customize-section" aria-labelledby="basic-heading">
+          <div class="section-title-row"><h3 id="basic-heading"><span class="step-number">2</span>基本</h3><span class="section-hint">顔・髪型・体格</span></div>
+        <label class="field field-wide">
+          <span>文章</span>
+          <textarea id="content-input" rows="4" aria-label="文章"></textarea>
+        </label>
+
+        <section id="body-tools" class="body-tools" hidden aria-label="本文を整える">
+          <div class="section-title-row"><h3>文章を整える</h3><span class="section-hint">本文だけ</span></div>
+          <div class="body-format-tools" role="group" aria-label="本文の整形">
+            <button type="button" data-body-format="plain">通常</button>
+            <button type="button" data-body-format="strong">強調</button>
+            <button type="button" data-body-format="list">箇条書き</button>
+          </div>
+          <p class="helper-text compact">文章を改行して入力すると、箇条書きでは1行ずつ項目になります。</p>
+        </section>
+
+        <div class="field-grid">
+          <label class="field">
+            <span>文字の色</span>
+            <input id="text-color" type="color" aria-label="文字の色" />
+          </label>
+          <label class="field">
+            <span>パーツの背景色</span>
+            <input id="background-color" type="color" aria-label="背景の色" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="range-label"><span>文字の大きさ</span><output id="font-size-value"></output></span><span class="range-hint"><span>小さめ</span><span>大きめ</span></span>
+          <input id="font-size" type="range" min="16" max="72" step="1" aria-label="文字の大きさ" />
+        </label>
+
+        <label class="check-field">
+          <input id="font-weight" type="checkbox" aria-label="太字" />
+          <span>太字にする</span>
+        </label>
+
+        <fieldset class="field-set">
+          <legend>文字の位置</legend>
+          <div class="segmented" role="group" aria-label="文字の位置">
+            <button type="button" data-align="left">左</button>
+            <button type="button" data-align="center">中央</button>
+            <button type="button" data-align="right">右</button>
+          </div>
+        </fieldset>
+
+        <label class="field">
+          <span class="range-label"><span>行間</span><output id="line-height-value"></output></span><span class="range-hint"><span>きゅっと</span><span>ゆったり</span></span>
+          <input id="line-height" type="range" min="1" max="2.4" step="0.1" aria-label="行間" />
+        </label>
+
+        <label class="field">
+          <span class="range-label"><span>内側の余白</span><output id="padding-value"></output></span><span class="range-hint"><span>きゅっと</span><span>ゆったり</span></span>
+          <input id="padding" type="range" min="0" max="64" step="1" aria-label="内側の余白" />
+        </label>
+
+        <label class="field">
+          <span class="range-label"><span>外側の余白</span><output id="margin-value"></output></span>
+          <input id="margin" type="range" min="0" max="64" step="1" aria-label="外側の余白" />
+        </label>
+
+        <label class="field">
+          <span class="range-label"><span>幅</span><output id="width-value"></output></span>
+          <input id="width" type="range" min="40" max="100" step="1" aria-label="幅" />
+        </label>
+
+        <div class="field-grid">
+          <label class="field">
+            <span>枠線</span>
+            <select id="border-width" aria-label="枠線">
+              <option value="0">なし</option>
+              <option value="1">細い</option>
+              <option value="2">ふつう</option>
+              <option value="4">太い</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>枠線の色</span>
+            <input id="border-color" type="color" aria-label="枠線の色" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="range-label"><span>角の丸み</span><output id="radius-value"></output></span><span class="range-hint"><span>カクカク</span><span>まるい</span></span>
+          <input id="radius" type="range" min="0" max="48" step="1" aria-label="角の丸み" />
+        </label>
+        </section>
+
+        <section class="customize-section" aria-labelledby="decoration-heading">
+          <div class="section-title-row"><h3 id="decoration-heading"><span class="step-number">3</span>装飾</h3><span class="section-hint">あとから足せます</span></div>
+          <div class="decoration-list">
+            <div class="decoration-row"><span class="decoration-label">影をつける</span><div class="choice-grid" role="group" aria-label="影をつける"><button type="button" data-decoration="shadow:none">なし</button><button type="button" data-decoration="shadow:soft">薄い</button><button type="button" data-decoration="shadow:strong">くっきり</button></div></div>
+            <div class="decoration-row"><span class="decoration-label">立体感をつける</span><div class="choice-grid" role="group" aria-label="立体感をつける"><button type="button" data-decoration="depth:none">なし</button><button type="button" data-decoration="depth:emboss">浮き出し</button><button type="button" data-decoration="depth:inset">へこみ</button></div></div>
+            <div class="decoration-row"><span class="decoration-label">枠をつける</span><div class="choice-grid" role="group" aria-label="枠をつける"><button type="button" data-decoration="borderStyle:none">なし</button><button type="button" data-decoration="borderStyle:solid">細い線</button><button type="button" data-decoration="borderStyle:double">二重線</button></div></div>
+            <div class="decoration-row"><span class="decoration-label">光らせる</span><div class="choice-grid" role="group" aria-label="光らせる"><button type="button" data-decoration="glow:none">なし</button><button type="button" data-decoration="glow:soft">ぼんやり</button><button type="button" data-decoration="glow:strong">強く</button></div></div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="builder-footer" aria-label="ページ情報">
+      <span class="footer-brand">0EN Builder</span>
+      <span>ページ：<strong id="footer-page-title">はじめてのペライチ</strong></span>
+      <span>パーツ：<strong id="footer-element-count">1</strong></span>
+      <span>選択中：<strong id="footer-selection">見出し</strong></span>
+      <span class="footer-spacer"></span>
+      <span class="footer-status"><i></i><strong id="footer-save-status">編集中</strong></span>
+      <button id="footer-code-button" class="footer-code-button" type="button">HTMLを見る</button>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
