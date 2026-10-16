@@ -43,6 +43,7 @@ model.activePreset = "simple";
 model.selectedColumn = "left";
 model.selectedIds = ["hero-title"];
 model.selectedGroupId = null;
+model.selectedColumns = [];
 const frame = document.querySelector("#preview-frame");
 const codeOutput = document.querySelector("#code-output");
 const pageSettings = document.querySelector("#page-settings");
@@ -52,7 +53,6 @@ const bodyTools = document.querySelector("#body-tools");
 const layoutTools = document.querySelector("#layout-tools");
 const layoutGap = document.querySelector("#layout-gap");
 const layoutGapValue = document.querySelector("#layout-gap-value");
-const contextMenu = document.querySelector("#context-menu");
 const layoutPopover = document.querySelector("#layout-popover");
 const deleteSection = document.querySelector("#delete-section");
 const deleteButton = document.querySelector("#delete-selected");
@@ -61,9 +61,29 @@ const actionToastMessage = document.querySelector("#action-toast-message");
 const undoDelete = document.querySelector("#undo-delete");
 const undoButton = document.querySelector("#undo-button");
 const history = [];
+let pendingPreviewScrollTop = 0;
+const collapsedSections = new Set(["preset-tools", "decoration-tools"]);
+
+function toggleSection(section) {
+  if (collapsedSections.has(section.id)) collapsedSections.delete(section.id);
+  else collapsedSections.add(section.id);
+  const expanded = !collapsedSections.has(section.id);
+  section.setAttribute("aria-expanded", String(expanded));
+}
+
+document.querySelectorAll("[data-collapsible]").forEach((section) => {
+  const title = section.querySelector(".collapsible-title");
+  title.addEventListener("click", () => toggleSection(section));
+  title.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleSection(section);
+    }
+  });
+});
 
 function snapshotModel() {
-  return structuredClone({ page: model.page, layout: model.layout, layoutDirection: model.layoutDirection, layoutGap: model.layoutGap, layoutRatios: model.layoutRatios, columns: model.columns, groups: model.groups, elements: model.elements, selectedIds: model.selectedIds, selectedColumn: model.selectedColumn, selectedGroupId: model.selectedGroupId, activePreset: model.activePreset });
+  return structuredClone({ page: model.page, layout: model.layout, layoutDirection: model.layoutDirection, layoutGap: model.layoutGap, layoutRatios: model.layoutRatios, columns: model.columns, groups: model.groups, elements: model.elements, selectedIds: model.selectedIds, selectedColumn: model.selectedColumn, selectedGroupId: model.selectedGroupId, selectedColumns: model.selectedColumns, activePreset: model.activePreset });
 }
 
 function pushHistory() {
@@ -159,6 +179,25 @@ function elementMarkup(element, inlineStyles = false) {
     return `    <${tag} id="${element.id}" data-element-id="${element.id}" class="text-element ${kind}${selected}"${editable}${inline}>${content}</${tag}>`;
 }
 
+function layoutColumnLabel(direction, index, total) {
+  if (direction === "column") return total === 2 ? ["上段", "下段"][index] : `第${index + 1}段`;
+  return total === 2 ? ["左側", "右側"][index] : `第${index + 1}列`;
+}
+
+function isGuideTarget(groupId, root = false) {
+  if (selectionCount() > 0) return false;
+  if (model.selectedGroupId) return groupId === model.selectedGroupId;
+  return root;
+}
+
+function columnSelectionKey(groupId, column) {
+  return `${groupId || "root"}::${column}`;
+}
+
+function isColumnSelected(groupId, column) {
+  return model.selectedColumns.includes(columnSelectionKey(groupId, column));
+}
+
 function groupMarkup(group, { inlineStyles = false, preview = false } = {}) {
   const columns = group.columns;
   const columnMarkup = columns.map((column) => {
@@ -167,9 +206,11 @@ function groupMarkup(group, { inlineStyles = false, preview = false } = {}) {
       ...group.elementIds.map((id) => model.elements.find((element) => element.id === id)).filter((element) => element?.groupId === group.id && element.column === column).map((element) => elementMarkup(element, inlineStyles)),
       ...nestedGroups.map((nestedGroup) => groupMarkup(nestedGroup, { inlineStyles, preview })),
     ].join("\n");
-    const empty = preview && !parts ? `<div class="empty-column" data-group-id="${group.id}" data-column-id="${column}">ここにパーツを追加</div>` : "";
     const active = column === model.selectedColumn && group.id === model.selectedGroupId ? " is-active" : "";
-    return `      <div class="layout-column${active}" data-group-id="${group.id}" data-column-id="${column}">${parts}${empty ? `\n${empty}` : ""}</div>`;
+    const selectedColumn = isColumnSelected(group.id, column) ? " is-column-selected" : "";
+    const guide = preview && isGuideTarget(group.id) ? " layout-guide-column" : "";
+    const label = guide ? ` data-layout-label="${layoutColumnLabel(group.direction, columns.indexOf(column), columns.length)}"` : "";
+    return `      <div class="layout-column${active}${selectedColumn}${guide}" data-group-id="${group.id}" data-column-id="${column}"${label}>${parts}</div>`;
   }).join("\n");
   const layoutClass = `nested-layout layout-split layout-${group.direction}`;
   return `    <div class="${layoutClass}" data-group-id="${group.id}">${columnMarkup}\n    </div>`;
@@ -184,44 +225,53 @@ function generatedHtml({ inlineStyles = false, preview = false } = {}) {
       ...model.elements.filter((element) => !groupedIds.has(element.id) && (element.column || "left") === column).map((element) => elementMarkup(element, inlineStyles)),
       ...directGroups.map((group) => groupMarkup(group, { inlineStyles, preview })),
     ].join("\n");
-    const empty = preview && !parts ? `<div class="empty-column" data-column-id="${column}">ここにパーツを追加</div>` : "";
     const active = column === model.selectedColumn ? " is-active" : "";
-    return `    <div class="layout-column${active}" data-column-id="${column}">\n${parts}${empty ? `\n${empty}` : ""}\n    </div>`;
+    const selectedColumn = isColumnSelected(null, column) ? " is-column-selected" : "";
+    const guide = preview && isGuideTarget(null, true) ? " layout-guide-column" : "";
+    const label = guide ? ` data-layout-label="${layoutColumnLabel(model.layoutDirection, columns.indexOf(column), columns.length)}"` : "";
+    return `    <div class="layout-column${active}${selectedColumn}${guide}" data-column-id="${column}"${label}>\n${parts}\n    </div>`;
   }).join("\n");
   const layoutClass = columns.length > 1 ? `layout layout-split layout-${model.layoutDirection}` : "layout layout-single";
   return `<main class="page">\n  <section class="hero ${layoutClass}">\n${columnMarkup}\n  </section>\n</main>`;
 }
 
+function layoutDeclaration(direction, ratios, gap) {
+  if (direction === "column") return `display:flex;flex-direction:column;gap:${gap}px;align-items:stretch;`;
+  return `display:grid;grid-template-columns:${ratios.map((ratio) => `minmax(0, ${ratio}fr)`).join(" ")};gap:${gap}px;align-items:start;`;
+}
+
 function generatedCss() {
   const elementCss = model.elements.map((element) => `#${element.id} { ${cssFor(element)} }`).join("\n");
-  const layoutRule = model.layoutDirection === "column" ? `display: flex; flex-direction: column; gap: ${model.layoutGap}px;` : `display: grid; grid-template-columns: ${model.layoutRatios.map((ratio) => `${ratio}fr`).join(" ")}; gap: ${model.layoutGap}px;`;
-  const columnFlex = model.layoutDirection === "column" ? model.layoutRatios.map((ratio, index) => `.layout-column:nth-child(${index + 1}) { flex: ${ratio} 1 0; }`).join(" ") : "";
-  const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"] { ${group.direction === "column" ? `display:flex; flex-direction:column; gap:${group.gap}px;` : `display:grid; grid-template-columns:${group.ratios.map((ratio) => `${ratio}fr`).join(" ")}; gap:${group.gap}px;`} }`).join("\n");
-  return `.page { min-height: 100%; padding: 48px 24px; background: ${model.page.backgroundColor}; }\n.hero { max-width: 760px; margin: 0 auto; }\n.layout-split { ${layoutRule} }\n.layout-column { min-width: 0; }\n${columnFlex}\n${groupCss}\n${elementCss}`;
+  const layoutRule = layoutDeclaration(model.layoutDirection, model.layoutRatios, model.layoutGap);
+  const columnFlex = model.layoutDirection === "column" ? ".layout-column { flex: 0 0 auto; }" : "";
+  const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"] { ${layoutDeclaration(group.direction, group.ratios, group.gap)} }`).join("\n");
+  return `.page { min-height: 100%; padding: 48px 24px; background: ${model.page.backgroundColor}; }\n.hero { max-width: 760px; margin: 0 auto; }\n.layout-split { ${layoutRule} }\n.nested-layout { width: 100%; max-width: 100%; min-width: 0; }\n.layout-column { box-sizing: border-box; width: 100%; min-width: 0; }\n.text-element { overflow-wrap: anywhere; word-break: break-word; }\n${columnFlex}\n${groupCss}\n${elementCss}`;
 }
 
 function previewDocument() {
   const elementCss = model.elements.map((element) => `#${element.id}{${cssFor(element)}}`).join("");
-  const layoutRule = model.layoutDirection === "column" ? `display:flex;flex-direction:column;gap:${model.layoutGap}px` : `display:grid;grid-template-columns:${model.layoutRatios.map((ratio) => `${ratio}fr`).join(" ")};gap:${model.layoutGap}px`;
-  const columnFlex = model.layoutDirection === "column" ? model.layoutRatios.map((ratio, index) => `.layout-column:nth-child(${index + 1}){flex:${ratio} 1 0}`).join("") : "";
-  const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"]{${group.direction === "column" ? `display:flex;flex-direction:column;gap:${group.gap}px` : `display:grid;grid-template-columns:${group.ratios.map((ratio) => `${ratio}fr`).join(" ")};gap:${group.gap}px`}}`).join("");
-  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><style>html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.page{min-height:100vh;padding:48px 24px;background:${model.page.backgroundColor};box-sizing:border-box}.hero{max-width:760px;margin:0 auto}.layout-split{${layoutRule}}${columnFlex}${groupCss}.layout-column{min-width:0;min-height:130px;padding:8px;border-radius:12px}.layout-column.is-active{background:rgba(37,99,235,.04)}.empty-column{display:grid;min-height:110px;place-items:center;border:2px dashed #b9d0ff;border-radius:12px;color:#6b86b5;font-size:13px}.text-element{box-sizing:border-box;cursor:pointer;transition:outline .15s ease,filter .2s ease;}.text-element:hover{outline:2px solid #8ab4ff;outline-offset:5px}.text-element.is-selected{outline:3px solid #111827;outline-offset:6px}.text-element.is-selected-2{outline-color:#2563eb}.text-element.is-selected-3{outline-color:#7c3aed}.text-element[contenteditable="true"]{outline:3px solid #2563eb;outline-offset:6px;cursor:text}</style></head><body>${generatedHtml({ inlineStyles: true, preview: true })}<script>document.querySelectorAll('.text-element').forEach((element)=>{let clickTimer;element.addEventListener('click',(event)=>{event.stopPropagation();clearTimeout(clickTimer);clickTimer=setTimeout(()=>parent.postMessage({type:'select',id:element.dataset.elementId,column:element.closest('.layout-column')?.dataset.columnId,groupId:element.closest('.layout-column')?.dataset.groupId,shift:event.shiftKey},'*'),220)});element.addEventListener('dblclick',(event)=>{event.stopPropagation();clearTimeout(clickTimer);element.dataset.originalText=element.innerText;element.contentEditable='true';element.focus();const range=document.caretRangeFromPoint?.(event.clientX,event.clientY);const selection=window.getSelection();if(range&&element.contains(range.startContainer)){selection.removeAllRanges();selection.addRange(range)}else{const fallback=document.createRange();fallback.selectNodeContents(element);fallback.collapse(false);selection.removeAllRanges();selection.addRange(fallback)}parent.postMessage({type:'edit-start',id:element.dataset.elementId},'*')});element.addEventListener('input',()=>parent.postMessage({type:'edit-content',id:element.dataset.elementId,content:element.innerText},'*'));element.addEventListener('keydown',(event)=>{if(event.key==='Enter'){event.preventDefault();element.blur()}if(event.key==='Escape'){element.innerText=element.dataset.originalText||element.innerText;element.blur()}});element.addEventListener('blur',()=>{element.contentEditable='false';parent.postMessage({type:'edit-end',id:element.dataset.elementId},'*')})});document.querySelectorAll('.layout-column').forEach((column)=>column.addEventListener('click',(event)=>{if(event.target===column||event.target.classList.contains('empty-column')){event.stopPropagation();parent.postMessage({type:'select-column',column:column.dataset.columnId,groupId:column.dataset.groupId},'*')}}));document.querySelectorAll('.text-element,.layout-column').forEach((target)=>target.addEventListener('contextmenu',(event)=>{event.preventDefault();const element=event.target.closest('.text-element');parent.postMessage({type:'context-menu',id:element?.dataset.elementId,column:target.closest('.layout-column')?.dataset.columnId,groupId:target.closest('.layout-column')?.dataset.groupId,x:event.clientX,y:event.clientY},'*')}));document.body.addEventListener('click',()=>parent.postMessage({type:'clear-selection'},'*'));window.addEventListener('message',(event)=>{if(event.data?.type==='focus'){const target=document.getElementById(event.data.id);if(target){target.scrollIntoView({block:'center',behavior:'smooth'});target.animate([{filter:'brightness(1.12)'},{filter:'brightness(1)'}],{duration:450});}}});<\/script></body></html>`;
+  const layoutRule = layoutDeclaration(model.layoutDirection, model.layoutRatios, model.layoutGap);
+  const columnFlex = model.layoutDirection === "column" ? ".layout-column{flex:0 0 auto}" : "";
+  const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"]{${layoutDeclaration(group.direction, group.ratios, group.gap)}}`).join("");
+  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><style>html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.page{min-height:100vh;padding:48px 24px;background:${model.page.backgroundColor};box-sizing:border-box}.hero{max-width:760px;margin:0 auto}.layout-split{${layoutRule}}${columnFlex}${groupCss}.nested-layout{width:100%;max-width:100%;min-width:0}.layout-column{box-sizing:border-box;width:100%;min-width:0;min-height:130px;padding:8px;border-radius:12px}.layout-split > .layout-column:not(.layout-guide-column){background:rgba(138,180,255,.025);box-shadow:inset 0 0 0 1px rgba(138,180,255,.16)}.layout-column.is-active{background:rgba(37,99,235,.04)}.layout-column.is-column-selected{background:rgba(37,99,235,.12);outline:3px solid #2563eb;outline-offset:4px}.layout-guide-column{position:relative;display:flex;flex-direction:column;outline:2px dashed #8ab4ff;outline-offset:4px;background:rgba(138,180,255,.07)}.layout-guide-column.is-column-selected{outline:3px solid #2563eb;outline-offset:4px;background:rgba(37,99,235,.12)}.layout-guide-column::before{content:attr(data-layout-label);position:absolute;top:-13px;left:8px;padding:2px 6px;border-radius:999px;background:#e8f0ff;color:#2563eb;font-size:10px;font-weight:700;line-height:1.2;pointer-events:none}.empty-column{display:grid;height:100%;min-height:110px;box-sizing:border-box;place-items:center;border:2px dashed #b9d0ff;border-radius:12px;color:#6b86b5;font-size:13px}.column-add-zone{flex:1;min-height:110px;margin-top:8px}.layout-guide-column > .empty-column:not(.column-add-zone){border-color:transparent;background:transparent}.text-element{box-sizing:border-box;max-width:100%;overflow-wrap:anywhere;word-break:break-word;cursor:pointer;transition:outline .15s ease,filter .2s ease;}.text-element:hover{outline:2px solid #8ab4ff;outline-offset:5px}.text-element.is-selected{outline:3px solid #111827;outline-offset:6px}.text-element.is-selected-2{outline-color:#2563eb}.text-element.is-selected-3{outline-color:#7c3aed}.text-element[contenteditable="true"]{outline:3px solid #2563eb;outline-offset:6px;cursor:text}</style></head><body>${generatedHtml({ inlineStyles: true, preview: true })}<script>document.querySelectorAll('.text-element').forEach((element)=>{let clickTimer;element.addEventListener('click',(event)=>{event.stopPropagation();clearTimeout(clickTimer);clickTimer=setTimeout(()=>parent.postMessage({type:'select',id:element.dataset.elementId,column:element.closest('.layout-column')?.dataset.columnId,groupId:element.closest('.layout-column')?.dataset.groupId,shift:event.shiftKey},'*'),220)});element.addEventListener('dblclick',(event)=>{event.stopPropagation();clearTimeout(clickTimer);element.dataset.originalText=element.innerText;element.contentEditable='true';element.focus();const range=document.caretRangeFromPoint?.(event.clientX,event.clientY);const selection=window.getSelection();if(range&&element.contains(range.startContainer)){selection.removeAllRanges();selection.addRange(range)}else{const fallback=document.createRange();fallback.selectNodeContents(element);fallback.collapse(false);selection.removeAllRanges();selection.addRange(fallback)}parent.postMessage({type:'edit-start',id:element.dataset.elementId},'*')});element.addEventListener('input',()=>parent.postMessage({type:'edit-content',id:element.dataset.elementId,content:element.innerText},'*'));element.addEventListener('keydown',(event)=>{if(event.key==='Enter'){event.preventDefault();element.blur()}if(event.key==='Escape'){element.innerText=element.dataset.originalText||element.innerText;element.blur()}});element.addEventListener('blur',()=>{element.contentEditable='false';parent.postMessage({type:'edit-end',id:element.dataset.elementId},'*')})});document.querySelectorAll('.layout-column').forEach((column)=>column.addEventListener('click',(event)=>{if(event.target===column||event.target.classList.contains('empty-column')){event.stopPropagation();parent.postMessage({type:'select-column',column:column.dataset.columnId,groupId:column.dataset.groupId,shift:event.shiftKey},'*')}}));document.querySelectorAll('.text-element,.layout-column').forEach((target)=>target.addEventListener('contextmenu',(event)=>{event.preventDefault();const element=event.target.closest('.text-element');parent.postMessage({type:'context-menu',id:element?.dataset.elementId,column:target.closest('.layout-column')?.dataset.columnId,groupId:target.closest('.layout-column')?.dataset.groupId,x:event.clientX,y:event.clientY},'*')}));window.addEventListener('scroll',()=>parent.postMessage({type:'preview-scroll',top:window.scrollY},'*'));document.body.addEventListener('click',()=>parent.postMessage({type:'clear-selection'},'*'));window.addEventListener('message',(event)=>{if(event.data?.type==='restore-scroll'){window.scrollTo(0,Math.max(0,Number(event.data.top)||0));}if(event.data?.type==='focus'){const target=document.getElementById(event.data.id);if(target){target.scrollIntoView({block:'center',behavior:'smooth'});target.animate([{filter:'brightness(1.12)'},{filter:'brightness(1)'}],{duration:450});}}});<\/script></body></html>`;
 }
 
 function syncControls() {
   const element = selectedElement();
   const s = element.style;
   const count = selectionCount();
+  const columnCount = model.selectedColumns.length;
   const layoutActive = count === 0 || count > 1;
   const activeGroup = model.groups.find((group) => group.id === model.selectedGroupId);
+  document.querySelectorAll("[data-collapsible]").forEach((section) => section.setAttribute("aria-expanded", String(!collapsedSections.has(section.id))));
   pageBackground.value = model.page.backgroundColor;
   undoButton.disabled = history.length === 0;
   deleteSection.hidden = count === 0;
   deleteButton.textContent = count > 1 ? `🗑 選択した${count}個を削除` : "🗑 このパーツを削除";
   layoutTools.hidden = !layoutActive;
   document.querySelectorAll(".right-panel > .customize-section:not(#layout-tools)").forEach((section) => { section.hidden = layoutActive; });
-  document.querySelector("#layout-selection-count").textContent = count > 1 ? `${count}個選択中` : "ページの並び方";
-  document.querySelector("#layout-help").textContent = count > 1 ? "選んだパーツを、ひとつのまとまりとして並べます。" : "空白を選んで、パーツの並び方を決めます。";
+  document.querySelector("#layout-selection-count").textContent = columnCount > 1 ? `レイアウトの場所を${columnCount}つ選択中` : columnCount === 1 ? "選択中の場所" : count > 1 ? `${count}個選択中` : "ページの並び方";
+  document.querySelector("#layout-help").textContent = columnCount > 1 ? "選んだ場所に、横長の段を追加できます。" : columnCount === 1 ? "この場所を左右・上下に分けられます。" : count > 1 ? "選んだパーツを、ひとつのまとまりとして並べます。" : "空白を選んで、パーツの並び方を決めます。点線は編集用の目印です。";
   document.querySelector("#layout-gap-field").hidden = activeGroup ? activeGroup.columns.length < 2 : model.columns.length < 2;
   layoutGap.value = activeGroup ? activeGroup.gap : model.layoutGap;
   layoutGapValue.value = `${layoutGap.value}px`;
@@ -259,6 +309,10 @@ function syncControls() {
 }
 
 function render() {
+  const documentScroller = document.scrollingElement;
+  const pageScrollTop = documentScroller?.scrollTop || 0;
+  const rightPanel = document.querySelector(".right-panel");
+  const rightPanelScrollTop = rightPanel?.scrollTop || 0;
   syncControls();
   frame.srcdoc = previewDocument();
   document.querySelector("#html-output").textContent = generatedHtml();
@@ -266,10 +320,16 @@ function render() {
   document.querySelector("#selection-status").textContent = selectionCount() > 1 ? `${selectionCount()}個のパーツを選択中` : hasSelection() ? `${selectedElement().id}を編集中` : "レイアウトを選択中";
   document.querySelector("#footer-element-count").textContent = model.elements.length;
   document.querySelector("#footer-selection").textContent = selectionCount() > 1 ? `${selectionCount()}個のパーツ` : hasSelection() ? (selectedElement().type === "body" ? "本文" : selectedElement().type === "image" ? "画像" : "見出し") : "レイアウト";
+  requestAnimationFrame(() => {
+    if (documentScroller) documentScroller.scrollTop = pageScrollTop;
+    if (rightPanel) rightPanel.scrollTop = rightPanelScrollTop;
+  });
 }
 
 frame.addEventListener("load", () => {
-  frame.contentWindow?.postMessage({ type: "focus", id: selectionCount() === 1 ? model.selectedIds[0] : null }, "*");
+  const id = selectionCount() === 1 ? model.selectedIds[0] : null;
+  if (id) frame.contentWindow?.postMessage({ type: "focus", id }, "*");
+  else frame.contentWindow?.postMessage({ type: "restore-scroll", top: pendingPreviewScrollTop }, "*");
 });
 
 function updateStyle(key, value) {
@@ -347,9 +407,121 @@ function applyLayout(direction) {
   render();
 }
 
+function addRootRowBelow() {
+  const oldColumns = [...model.columns];
+  const oldDirection = model.layoutDirection;
+  const oldRatios = [...model.layoutRatios];
+  const groupId = `layout-group-${model.groups.length + 1}`;
+  const groupColumns = oldColumns.map((_, index) => `${groupId}-column-${index + 1}`);
+  const directElements = model.elements.filter((element) => !element.groupId);
+  const directGroups = model.groups.filter((group) => !group.parentGroupId);
+  const rootColumn = "column-1";
+  const topGroup = { id: groupId, parentGroupId: null, parentColumn: rootColumn, direction: oldDirection, ratios: oldRatios, gap: model.layoutGap, columns: groupColumns, elementIds: directElements.map((element) => element.id) };
+  directElements.forEach((element) => {
+    const index = Math.max(0, oldColumns.indexOf(element.column || oldColumns[0]));
+    element.groupId = groupId;
+    element.column = groupColumns[index] || groupColumns[0];
+  });
+  directGroups.forEach((group) => {
+    const index = Math.max(0, oldColumns.indexOf(group.parentColumn || oldColumns[0]));
+    group.parentGroupId = groupId;
+    group.parentColumn = groupColumns[index] || groupColumns[0];
+  });
+  model.groups.push(topGroup);
+  model.layout = "split";
+  model.layoutDirection = "column";
+  model.columns = [rootColumn, "column-2"];
+  model.layoutRatios = [1, 1];
+  model.selectedIds = [];
+  model.selectedColumns = [];
+  model.selectedGroupId = null;
+  model.selectedColumn = "column-2";
+}
+
+function addLayoutArea(direction) {
+  pushHistory();
+  if (direction === "column" && !model.selectedGroupId && model.selectedColumns.length > 1) {
+    const rootKeys = new Set(model.columns.map((column) => columnSelectionKey(null, column)));
+    const selectedKeys = new Set(model.selectedColumns);
+    if (selectedKeys.size === rootKeys.size && [...rootKeys].every((key) => selectedKeys.has(key))) {
+      addRootRowBelow();
+      render();
+      return;
+    }
+  }
+  if (direction === "column" && model.selectedGroupId) {
+    const selectedGroup = model.groups.find((group) => group.id === model.selectedGroupId);
+    if (selectedGroup) {
+      const wrapperId = `layout-group-${model.groups.length + 1}`;
+      const wrapperColumns = [`${wrapperId}-column-1`, `${wrapperId}-column-2`];
+      const wrapper = {
+        id: wrapperId,
+        parentGroupId: selectedGroup.parentGroupId || null,
+        parentColumn: selectedGroup.parentColumn,
+        direction: "column",
+        ratios: [1, 1],
+        gap: model.layoutGap,
+        columns: wrapperColumns,
+        elementIds: [],
+      };
+      selectedGroup.parentGroupId = wrapperId;
+      selectedGroup.parentColumn = wrapperColumns[0];
+      model.groups.push(wrapper);
+      model.selectedGroupId = wrapperId;
+      model.selectedColumn = wrapperColumns[1];
+      model.selectedIds = [];
+      render();
+      return;
+    }
+  }
+  const hasColumnTarget = Boolean(model.selectedGroupId) || model.columns.length > 1;
+  if (hasColumnTarget) {
+    const parentGroupId = model.selectedGroupId || null;
+    const parentColumn = model.selectedColumn || model.columns[0];
+    const groupId = `layout-group-${model.groups.length + 1}`;
+    const columns = [`${groupId}-column-1`, `${groupId}-column-2`];
+    const childElements = model.elements.filter((element) => (element.groupId || null) === parentGroupId && element.column === parentColumn);
+    const childGroups = model.groups.filter((group) => (group.parentGroupId || null) === parentGroupId && group.parentColumn === parentColumn);
+    model.groups.push({ id: groupId, parentGroupId, parentColumn, direction, ratios: [1, 1], gap: model.layoutGap, columns, elementIds: childElements.map((element) => element.id) });
+    childElements.forEach((element) => { element.groupId = groupId; element.column = columns[0]; });
+    childGroups.forEach((group) => { group.parentGroupId = groupId; group.parentColumn = columns[0]; });
+    model.selectedIds = [];
+    model.selectedGroupId = groupId;
+    model.selectedColumn = columns[0];
+    render();
+    return;
+  }
+  const newColumn = model.selectedGroupId
+    ? `${model.selectedGroupId}-column-${Date.now()}`
+    : `column-${model.columns.length + 1}`;
+  if (model.selectedGroupId) {
+    const group = model.groups.find((candidate) => candidate.id === model.selectedGroupId);
+    if (!group) return;
+    group.direction = direction;
+    group.columns.push(newColumn);
+    group.ratios = group.columns.map(() => 1);
+    model.selectedColumn = newColumn;
+  } else {
+    model.layoutDirection = direction;
+    model.columns.push(newColumn);
+    model.layoutRatios = model.columns.map(() => 1);
+    model.layout = "split";
+    model.selectedColumn = newColumn;
+  }
+  render();
+}
+
 function applyLayoutTemplate(template) {
   if (template === "single") {
     mergeLayout();
+    return;
+  }
+  if (template === "add-horizontal") {
+    addLayoutArea("row");
+    return;
+  }
+  if (template === "add-vertical") {
+    addLayoutArea("column");
     return;
   }
   const templates = {
@@ -357,8 +529,6 @@ function applyLayoutTemplate(template) {
     "wide-left": { direction: "row", ratios: [1.8, 1] },
     "wide-right": { direction: "row", ratios: [1, 1.8] },
     three: { direction: "row", ratios: [1, 1, 1] },
-    "top-one": { direction: "column", ratios: [1, 2] },
-    "top-two": { direction: "column", ratios: [2, 1] },
   };
   const selected = model.selectedIds.filter((id) => model.elements.some((element) => element.id === id));
   pushHistory();
@@ -456,6 +626,54 @@ function mergeLayout() {
   render();
 }
 
+function deleteSelectedLayoutColumn() {
+  const selectedColumn = model.selectedColumn;
+  if (!selectedColumn) return;
+  pushHistory();
+  if (model.selectedGroupId) {
+    const group = model.groups.find((candidate) => candidate.id === model.selectedGroupId);
+    if (!group) return;
+    if (group.columns.length <= 1) {
+      history.pop();
+      mergeLayout();
+      return;
+    }
+    const remaining = group.columns.filter((column) => column !== selectedColumn);
+    const destination = remaining[0];
+    model.elements.forEach((element) => {
+      if (element.groupId === group.id && element.column === selectedColumn) element.column = destination;
+    });
+    model.groups.forEach((candidate) => {
+      if (candidate.parentGroupId === group.id && candidate.parentColumn === selectedColumn) candidate.parentColumn = destination;
+    });
+    group.columns = remaining;
+    group.ratios = remaining.map(() => 1);
+    model.selectedColumn = destination;
+    model.selectedIds = [];
+    render();
+    return;
+  }
+  if (model.columns.length <= 1) {
+    history.pop();
+    mergeLayout();
+    return;
+  }
+  const remaining = model.columns.filter((column) => column !== selectedColumn);
+  const destination = remaining[0];
+  model.elements.forEach((element) => {
+    if (!element.groupId && (element.column || "left") === selectedColumn) element.column = destination;
+  });
+  model.groups.forEach((group) => {
+    if (!group.parentGroupId && group.parentColumn === selectedColumn) group.parentColumn = destination;
+  });
+  model.columns = remaining;
+  model.layoutRatios = remaining.map(() => 1);
+  model.layout = remaining.length > 1 ? "split" : "single";
+  model.selectedColumn = destination;
+  model.selectedIds = [];
+  render();
+}
+
 function showToast(message) {
   actionToastMessage.textContent = message;
   actionToast.hidden = false;
@@ -496,7 +714,7 @@ document.querySelectorAll("[data-layout-template]").forEach((button) => button.a
 
 function addTextPart(type) {
   const id = `${type}-${model.elements.length + 1}`;
-  const bodyStyle = { color: "#334155", backgroundColor: "#ffffff", fontSize: 18, fontWeight: 400, textAlign: "left", lineHeight: 1.8, padding: 18, margin: 12, width: 92, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
+  const bodyStyle = { color: "#334155", backgroundColor: "#ffffff", fontSize: 18, fontWeight: 400, textAlign: "left", lineHeight: 1.8, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
   const column = model.selectedGroupId ? model.selectedColumn : model.columns.length > 1 ? model.selectedColumn : model.columns[0];
   const groupId = model.selectedGroupId || undefined;
   const template = type === "body" ? { id, type, column, groupId, format: "plain", content: "サービスの特徴や、お客さまへのメッセージをここに入力できます。", style: bodyStyle } : { ...structuredClone(initialModel.elements[0]), id, type, column, groupId, content: "ここに見出しを入力できます。" };
@@ -510,6 +728,7 @@ document.querySelector("#add-text").addEventListener("click", () => addTextPart(
 document.querySelector("#add-body").addEventListener("click", () => addTextPart("body"));
 document.querySelector("#layout-card").addEventListener("click", () => {
   model.selectedIds = [];
+  model.selectedColumns = [];
   model.selectedColumn = model.columns[0];
   model.selectedGroupId = null;
   const open = layoutPopover.hidden;
@@ -558,7 +777,8 @@ document.querySelector("#reset-page").addEventListener("click", () => {
   model.columns = structuredClone(initialModel.columns);
   model.groups = [];
   model.elements = structuredClone(initialModel.elements);
-  model.selectedIds = [initialModel.selectedId];
+    model.selectedIds = [initialModel.selectedId];
+    model.selectedColumns = [];
   model.selectedColumn = "left";
   model.selectedGroupId = null;
   model.activePreset = "simple";
@@ -578,34 +798,26 @@ window.addEventListener("message", (event) => {
     model.selectedIds = event.data.shift ? model.selectedIds.includes(event.data.id) ? model.selectedIds.filter((id) => id !== event.data.id) : [...model.selectedIds, event.data.id] : [event.data.id];
     model.selectedColumn = event.data.column || model.elements.find((element) => element.id === event.data.id)?.column || "left";
     model.selectedGroupId = event.data.groupId || model.elements.find((element) => element.id === event.data.id)?.groupId || null;
+    model.selectedColumns = [];
     render();
   } else if (event.data?.type === "select-column" && (model.columns.includes(event.data.column) || event.data.groupId)) {
     model.selectedColumn = event.data.column;
     model.selectedGroupId = event.data.groupId || null;
     model.selectedIds = [];
+    const key = columnSelectionKey(model.selectedGroupId, event.data.column);
+    const currentKeys = model.selectedColumns.filter((candidate) => candidate.startsWith(`${model.selectedGroupId || "root"}::`));
+    model.selectedColumns = event.data.shift
+      ? currentKeys.includes(key) ? currentKeys.filter((candidate) => candidate !== key) : [...currentKeys, key]
+      : [key];
     render();
+  } else if (event.data?.type === "preview-scroll") {
+    pendingPreviewScrollTop = Number(event.data.top) || 0;
   } else if (event.data?.type === "clear-selection") {
     model.selectedIds = [];
+    model.selectedColumns = [];
     model.selectedGroupId = null;
     render();
-  } else if (event.data?.type === "context-menu") {
-    model.selectedIds = event.data.id ? [event.data.id] : [];
-    model.selectedColumn = event.data.column || model.columns[0];
-    model.selectedGroupId = event.data.groupId || null;
-    render();
-    contextMenu.style.left = `${Math.min(event.data.x, window.innerWidth - 190)}px`;
-    contextMenu.style.top = `${Math.min(event.data.y, window.innerHeight - 140)}px`;
-    contextMenu.hidden = false;
   }
-});
-
-document.querySelectorAll("[data-context-action]").forEach((button) => button.addEventListener("click", () => {
-  contextMenu.hidden = true;
-  if (button.dataset.contextAction === "merge") mergeLayout();
-  else applyLayout(button.dataset.contextAction);
-}));
-document.addEventListener("click", (event) => {
-  if (!contextMenu.contains(event.target)) contextMenu.hidden = true;
 });
 
 render();

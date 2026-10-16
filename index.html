@@ -49,9 +49,8 @@
               <button type="button" data-layout-template="two"><span class="pattern-preview pattern-two"><i></i><i></i></span><strong>左右に2つ</strong></button>
               <button type="button" data-layout-template="wide-left"><span class="pattern-preview pattern-wide-left"><i></i><i></i></span><strong>左を広く</strong></button>
               <button type="button" data-layout-template="wide-right"><span class="pattern-preview pattern-wide-right"><i></i><i></i></span><strong>右を広く</strong></button>
-              <button type="button" data-layout-template="three"><span class="pattern-preview pattern-three"><i></i><i></i><i></i></span><strong>横に3つ</strong></button>
-              <button type="button" data-layout-template="top-one"><span class="pattern-preview pattern-top-one"><i></i><i></i><i></i></span><strong>上1・下2</strong></button>
-              <button type="button" data-layout-template="top-two"><span class="pattern-preview pattern-top-two"><i></i><i></i><i></i></span><strong>上2・下1</strong></button>
+              <button type="button" data-layout-template="add-horizontal"><span class="pattern-preview pattern-add-horizontal"><i></i><i></i></span><strong>横に追加</strong></button>
+              <button type="button" data-layout-template="add-vertical"><span class="pattern-preview pattern-add-vertical"><i></i><i></i></span><strong>下に追加</strong></button>
             </div>
             <p class="popover-note">選んだ場所に適用します。あとからさらに分けられます。</p>
           </div>
@@ -107,9 +106,8 @@
             <button type="button" data-layout-template="two"><span class="pattern-preview pattern-two"><i></i><i></i></span><strong>左右に2つ</strong></button>
             <button type="button" data-layout-template="wide-left"><span class="pattern-preview pattern-wide-left"><i></i><i></i></span><strong>左を広く</strong></button>
             <button type="button" data-layout-template="wide-right"><span class="pattern-preview pattern-wide-right"><i></i><i></i></span><strong>右を広く</strong></button>
-            <button type="button" data-layout-template="three"><span class="pattern-preview pattern-three"><i></i><i></i><i></i></span><strong>横に3つ</strong></button>
-            <button type="button" data-layout-template="top-one"><span class="pattern-preview pattern-top-one"><i></i><i></i><i></i></span><strong>上1・下2</strong></button>
-            <button type="button" data-layout-template="top-two"><span class="pattern-preview pattern-top-two"><i></i><i></i><i></i></span><strong>上2・下1</strong></button>
+            <button type="button" data-layout-template="add-horizontal"><span class="pattern-preview pattern-add-horizontal"><i></i><i></i></span><strong>横に追加</strong></button>
+            <button type="button" data-layout-template="add-vertical"><span class="pattern-preview pattern-add-vertical"><i></i><i></i></span><strong>下に追加</strong></button>
           </div>
           <label id="layout-gap-field" class="field">
             <span class="range-label"><span>間隔</span><output id="layout-gap-value"></output></span>
@@ -119,8 +117,8 @@
           <p class="helper-text compact">複数選択：Shiftを押しながらクリック</p>
         </section>
 
-        <section class="customize-section" aria-labelledby="preset-heading">
-          <div class="section-title-row"><h3 id="preset-heading"><span class="step-number">1</span>まずは雰囲気を選ぶ</h3><span class="section-hint">プリセット</span></div>
+        <section id="preset-tools" class="customize-section" data-collapsible aria-labelledby="preset-heading" aria-expanded="false">
+          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="preset-heading"><span class="step-number">1</span>まずは雰囲気を選ぶ</h3><span class="section-hint">プリセット</span></div>
           <div class="preset-grid" role="group" aria-label="雰囲気のプリセット">
             <button type="button" data-preset="simple"><span class="preset-sample sample-simple">あなたの<br />ページ</span><strong>シンプル</strong><small>すっきり、迷わない</small></button>
             <button type="button" data-preset="soft"><span class="preset-sample sample-soft">あなたの<br />ページ</span><strong>やわらかい</strong><small>親しみやすい</small></button>
@@ -130,8 +128,8 @@
           </div>
         </section>
 
-        <section class="customize-section" aria-labelledby="basic-heading">
-          <div class="section-title-row"><h3 id="basic-heading"><span class="step-number">2</span>基本</h3><span class="section-hint">顔・髪型・体格</span></div>
+        <section id="basic-tools" class="customize-section" data-collapsible aria-labelledby="basic-heading" aria-expanded="true">
+          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="basic-heading"><span class="step-number">2</span>基本</h3><span class="section-hint">顔・髪型・体格</span></div>
         <label class="field field-wide">
           <span>文章</span>
           <textarea id="content-input" rows="4" aria-label="文章"></textarea>
@@ -169,11 +167,11 @@
         </label>
 
         <fieldset class="field-set">
-          <legend>文字の位置</legend>
-          <div class="segmented" role="group" aria-label="文字の位置">
-            <button type="button" data-align="left">左</button>
-            <button type="button" data-align="center">中央</button>
-            <button type="button" data-align="right">右</button>
+          <legend>文字の揃え方</legend>
+          <div class="segmented" role="group" aria-label="文字の揃え方">
+            <button type="button" data-align="left">左揃え</button>
+            <button type="button" data-align="center">中央揃え</button>
+            <button type="button" data-align="right">右揃え</button>
           </div>
         </fieldset>
 
@@ -219,8 +217,8 @@
         </label>
         </section>
 
-        <section class="customize-section" aria-labelledby="decoration-heading">
-          <div class="section-title-row"><h3 id="decoration-heading"><span class="step-number">3</span>装飾</h3><span class="section-hint">あとから足せます</span></div>
+        <section id="decoration-tools" class="customize-section" data-collapsible aria-labelledby="decoration-heading" aria-expanded="false">
+          <div class="section-title-row collapsible-title" role="button" tabindex="0"><h3 id="decoration-heading"><span class="step-number">3</span>装飾</h3><span class="section-hint">あとから足せます</span></div>
           <div class="decoration-list">
             <div class="decoration-row"><span class="decoration-label">影をつける</span><div class="choice-grid" role="group" aria-label="影をつける"><button type="button" data-decoration="shadow:none">なし</button><button type="button" data-decoration="shadow:soft">薄い</button><button type="button" data-decoration="shadow:strong">くっきり</button></div></div>
             <div class="decoration-row"><span class="decoration-label">立体感をつける</span><div class="choice-grid" role="group" aria-label="立体感をつける"><button type="button" data-decoration="depth:none">なし</button><button type="button" data-decoration="depth:emboss">浮き出し</button><button type="button" data-decoration="depth:inset">へこみ</button></div></div>
@@ -246,11 +244,6 @@
       <button id="footer-code-button" class="footer-code-button" type="button">HTMLを見る</button>
     </footer>
 
-    <div id="context-menu" class="context-menu" hidden role="menu" aria-label="レイアウト操作">
-      <button type="button" data-context-action="row">↔ 左右に並べる</button>
-      <button type="button" data-context-action="column">↕ 上下に並べる</button>
-      <button type="button" data-context-action="merge">＋ ひとつに戻す</button>
-    </div>
     <div id="action-toast" class="action-toast" hidden><span id="action-toast-message"></span><button id="undo-delete" type="button">元に戻す</button></div>
 
     <script src="app.js"></script>
