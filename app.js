@@ -83,6 +83,7 @@ const layoutWidthField = document.querySelector("#layout-width-field");
 const layoutHeightField = document.querySelector("#layout-height-field");
 const layoutAnchorName = document.querySelector("#layout-anchor-name");
 const saveLayoutAnchor = document.querySelector("#save-layout-anchor");
+const deleteLayoutButton = document.querySelector("#delete-layout");
 const layoutPopover = document.querySelector("#layout-popover");
 const deleteSection = document.querySelector("#delete-section");
 const deleteButton = document.querySelector("#delete-selected");
@@ -185,6 +186,14 @@ const stylePresetDefinitions = {
   },
 };
 
+const stylePresetSpacing = {
+  casual: { layoutGap: 28, heading: { padding: 24, margin: 8, lineHeight: 1.35 }, body: { padding: 22, margin: 14, lineHeight: 1.85 }, image: { margin: 18 }, button: { margin: 14 } },
+  pop: { layoutGap: 32, heading: { padding: 28, margin: 10, lineHeight: 1.35 }, body: { padding: 24, margin: 18, lineHeight: 1.8 }, image: { margin: 22 }, button: { margin: 16 } },
+  sweet: { layoutGap: 30, heading: { padding: 28, margin: 10, lineHeight: 1.4 }, body: { padding: 22, margin: 16, lineHeight: 1.9 }, image: { margin: 20 }, button: { margin: 16 } },
+  blog: { layoutGap: 24, heading: { padding: 16, margin: 8, lineHeight: 1.35 }, body: { padding: 10, margin: 20, lineHeight: 2 }, image: { margin: 18 }, button: { margin: 12 } },
+  business: { layoutGap: 16, heading: { padding: 14, margin: 4, lineHeight: 1.25 }, body: { padding: 12, margin: 8, lineHeight: 1.6 }, image: { margin: 10 }, button: { margin: 8 } },
+};
+
 projectSetupForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const filename = projectFilename.value.trim();
@@ -232,7 +241,13 @@ function applyStylePreset(name) {
   model.elements.forEach((element) => {
     const partStyle = preset[element.type];
     if (partStyle) Object.assign(element.style, partStyle);
+    const spacing = stylePresetSpacing[name]?.[element.type];
+    if (spacing) Object.assign(element.style, spacing);
   });
+  if (stylePresetSpacing[name]) {
+    model.layoutGap = stylePresetSpacing[name].layoutGap;
+    model.groups.forEach((group) => { group.gap = stylePresetSpacing[name].layoutGap; });
+  }
   model.activeStylePreset = name;
   model.selectedStyle = true;
   model.selectedBackground = false;
@@ -378,6 +393,7 @@ function cssFor(element) {
   const rawStyle = Object.fromEntries(Object.entries(element.style || {}).filter(([, value]) => value !== undefined && value !== null && value !== ""));
   const s = { ...(element.type === "button" ? buttonDefaults : element.type === "body" ? bodyDefaults : element.type === "heading" ? headingDefaults : bodyDefaults), ...rawStyle };
   const effectiveBackgroundColor = s.backgroundColor || (element.type === "image" || element.type === "separator" ? "transparent" : "#ffffff");
+  const effectivePadding = ["heading", "body"].includes(element.type) && effectiveBackgroundColor === "transparent" ? 0 : s.padding;
   const imageMargin = element.type === "image"
     ? { left: `${s.margin}px auto ${s.margin}px 0`, center: `${s.margin}px auto`, right: `${s.margin}px 0 ${s.margin}px auto` }[s.imagePosition || "center"]
     : element.type === "button"
@@ -410,7 +426,7 @@ function cssFor(element) {
     ["heading", "body"].includes(element.type) ? "display: flex; flex-direction: column;" : "",
     ["heading", "body"].includes(element.type) ? `justify-content: ${{ top: "flex-start", center: "center", bottom: "flex-end" }[s.verticalAlign || "top"]};` : "",
     `line-height: ${s.lineHeight};`,
-    `padding: ${s.padding}px;`,
+    `padding: ${effectivePadding}px;`,
     `margin: ${imageMargin};`,
     `width: ${s.width}%;`,
     element.type === "button" ? `min-height: ${s.height || 48}px;` : "",
@@ -614,6 +630,7 @@ function syncControls() {
   deleteButton.textContent = count > 1 ? `🗑 選択した${count}個を削除` : "🗑 このパーツを削除";
   layoutTools.hidden = !layoutActive;
   styleTools.hidden = editorType !== "style";
+  deleteLayoutButton.hidden = !(model.selectedGroupId || model.columns.length > 1);
   document.querySelectorAll(".right-panel > .customize-section[data-editor]").forEach((section) => { section.hidden = layoutActive || !section.dataset.editor.split(/\s+/).includes(editorType); });
   document.querySelector("#layout-selection-count").textContent = columnCount > 1 ? `レイアウトの場所を${columnCount}つ選択中` : columnCount === 1 ? "選択中の場所" : count > 1 ? `${count}個選択中` : "ページの並び方";
   document.querySelector("#layout-help").textContent = columnCount > 1 ? "選んだ場所に、横長の段を追加できます。" : columnCount === 1 ? "この場所を左右・上下に分けられます。" : count > 1 ? "選んだパーツを、ひとつのまとまりとして並べます。" : "空白を選んで、パーツの並び方を決めます。点線は編集用の目印です。";
@@ -1619,6 +1636,12 @@ document.querySelectorAll("[data-layout-action]").forEach((button) => button.add
   if (button.dataset.layoutAction === "merge") mergeLayout();
   else applyLayout(button.dataset.layoutAction);
 }));
+deleteLayoutButton.addEventListener("click", () => {
+  if (!(model.selectedGroupId || model.columns.length > 1)) return;
+  if (!window.confirm("このレイアウトを削除しますか？中のパーツは残ります。")) return;
+  mergeLayout();
+  showToast("レイアウトを削除しました");
+});
 document.querySelectorAll("[data-layout-template]").forEach((button) => button.addEventListener("click", () => applyLayoutTemplate(button.dataset.layoutTemplate)));
 
 function insertionTarget() {

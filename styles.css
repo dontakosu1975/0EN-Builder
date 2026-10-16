@@ -195,6 +195,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 #basic-tools.is-button-mode > :not(#button-tools) { display: none; }
 #basic-tools.is-button-mode #button-tools { display: flex !important; }
 .layout-tools { background: #f7f9fc; border: 1px solid #dbe6f5; border-radius: 12px; padding: 12px; }
+.layout-remove-tool { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; padding-top: 10px; border-top: 1px solid #dbe6f5; }
+.layout-remove-tool .secondary-button { color: #9b3d3d; }
 .anchor-tool { display: flex; flex-direction: column; gap: 7px; padding: 10px; border: 1px solid #dbe6f5; border-radius: 10px; background: #fff; }
 .anchor-tool .secondary-button { width: 100%; }
 .layout-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
