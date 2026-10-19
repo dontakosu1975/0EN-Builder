@@ -6,6 +6,9 @@ const initialModel = {
     backgroundImage: "",
     backgroundSize: "cover",
     backgroundPosition: "center",
+    contentWidth: 760,
+    paddingX: 24,
+    paddingY: 48,
     anchors: [],
   },
   layout: "single",
@@ -29,6 +32,7 @@ const initialModel = {
         textAlign: "left",
         verticalAlign: "top",
         lineHeight: 1.3,
+        letterSpacing: -0.02,
         padding: 24,
         margin: 0,
         width: 88,
@@ -46,6 +50,9 @@ const initialModel = {
 };
 
 const model = structuredClone(initialModel);
+const groupStyleDefaults = { kind: "normal", backgroundColor: "transparent", padding: 0, margin: 0, borderWidth: 0, borderColor: "#d8c7ba", borderRadius: 0, shadow: "none", background: { type: "solid", color: "transparent", color2: "#ffffff", angle: 135 } };
+function newGroupStyle(style = {}) { return { ...groupStyleDefaults, ...style }; }
+function newResponsiveFontSize(style = {}) { return { enabled: false, min: 16, max: 48, ...style }; }
 model.activePreset = "simple";
 model.selectedColumn = "left";
 model.selectedIds = [];
@@ -54,6 +61,7 @@ model.selectedColumns = [];
 model.selectedBackground = false;
 model.selectedStyle = true;
 const frame = document.querySelector("#preview-frame");
+const previewFrameWrap = document.querySelector(".preview-frame-wrap");
 const projectSetup = document.querySelector("#project-setup");
 const projectSetupForm = document.querySelector("#project-setup-form");
 const projectFilename = document.querySelector("#project-filename");
@@ -73,6 +81,12 @@ const bodyTools = document.querySelector("#body-tools");
 const buttonTools = document.querySelector("#button-tools");
 const layoutTools = document.querySelector("#layout-tools");
 const styleTools = document.querySelector("#style-tools");
+const pageContentWidth = document.querySelector("#page-content-width");
+const pageContentWidthValue = document.querySelector("#page-content-width-value");
+const pagePaddingX = document.querySelector("#page-padding-x");
+const pagePaddingXValue = document.querySelector("#page-padding-x-value");
+const pagePaddingY = document.querySelector("#page-padding-y");
+const pagePaddingYValue = document.querySelector("#page-padding-y-value");
 const layoutGap = document.querySelector("#layout-gap");
 const layoutGapValue = document.querySelector("#layout-gap-value");
 const layoutWidth = document.querySelector("#layout-width");
@@ -84,9 +98,37 @@ const layoutHeightField = document.querySelector("#layout-height-field");
 const layoutAnchorName = document.querySelector("#layout-anchor-name");
 const saveLayoutAnchor = document.querySelector("#save-layout-anchor");
 const deleteLayoutButton = document.querySelector("#delete-layout");
+const groupBackgroundColor = document.querySelector("#group-background-color");
+const groupBackgroundNone = document.querySelector("#group-background-none");
+const groupPadding = document.querySelector("#group-padding");
+const groupPaddingValue = document.querySelector("#group-padding-value");
+const groupMargin = document.querySelector("#group-margin");
+const groupMarginValue = document.querySelector("#group-margin-value");
+const groupRadius = document.querySelector("#group-radius");
+const groupRadiusValue = document.querySelector("#group-radius-value");
+const groupBorderWidth = document.querySelector("#group-border-width");
+const groupBorderColor = document.querySelector("#group-border-color");
+const groupShadow = document.querySelector("#group-shadow");
+const groupBackgroundGradient = document.querySelector("#group-background-gradient");
+const groupBackgroundAngle = document.querySelector("#group-background-angle");
+const groupBackgroundColor1 = document.querySelector("#group-background-color1");
+const groupBackgroundColor2 = document.querySelector("#group-background-color2");
+const backgroundGradient = document.querySelector("#background-gradient");
+const backgroundGradientAngle = document.querySelector("#background-gradient-angle");
+const backgroundGradientColor1 = document.querySelector("#background-gradient-color1");
+const backgroundGradientColor2 = document.querySelector("#background-gradient-color2");
+const fontSizeMode = document.querySelector("#font-size-mode");
+const responsiveFontSizeTools = document.querySelector("#responsive-font-size-tools");
+const fontSizeMin = document.querySelector("#font-size-min");
+const fontSizeMinValue = document.querySelector("#font-size-min-value");
+const fontSizeMax = document.querySelector("#font-size-max");
+const fontSizeMaxValue = document.querySelector("#font-size-max-value");
 const layoutPopover = document.querySelector("#layout-popover");
 const deleteSection = document.querySelector("#delete-section");
 const deleteButton = document.querySelector("#delete-selected");
+const duplicateButton = document.querySelector("#duplicate-selected");
+const moveUpButton = document.querySelector("#move-selected-up");
+const moveDownButton = document.querySelector("#move-selected-down");
 const actionToast = document.querySelector("#action-toast");
 const actionToastMessage = document.querySelector("#action-toast-message");
 const undoDelete = document.querySelector("#undo-delete");
@@ -128,6 +170,10 @@ const imageOffsetX = document.querySelector("#image-offset-x");
 const imageOffsetXValue = document.querySelector("#image-offset-x-value");
 const imageOffsetY = document.querySelector("#image-offset-y");
 const imageOffsetYValue = document.querySelector("#image-offset-y-value");
+const textOffsetX = document.querySelector("#text-offset-x");
+const textOffsetXValue = document.querySelector("#text-offset-x-value");
+const textOffsetY = document.querySelector("#text-offset-y");
+const textOffsetYValue = document.querySelector("#text-offset-y-value");
 const textStrokeColor = document.querySelector("#text-stroke-color");
 const shadowOffsetX = document.querySelector("#shadow-offset-x");
 const shadowOffsetXValue = document.querySelector("#shadow-offset-x-value");
@@ -184,14 +230,41 @@ const stylePresetDefinitions = {
     image: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 6, shadow: "none", depth: "none", borderStyle: "solid", glow: "none" },
     separator: { borderColor: "#cbd5e1", borderWidth: 1, borderStyle: "solid" },
   },
+  natural: {
+    page: "#f6f4ed",
+    heading: { color: "#26352d", backgroundColor: "#fffdf7", fontFamily: "serif", fontWeight: 700, borderWidth: 1, borderColor: "#d9dfd5", borderRadius: 14, shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" },
+    body: { color: "#59665d", backgroundColor: "#fffdf7", fontFamily: "system", fontWeight: 400, borderWidth: 0, borderColor: "#d9dfd5", borderRadius: 14, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    button: { color: "#ffffff", backgroundColor: "#527a62", fontFamily: "system", fontWeight: 700, borderWidth: 0, borderColor: "#41634f", borderRadius: 8, shadow: "soft", depth: "none", borderStyle: "none", glow: "none" },
+    image: { borderWidth: 2, borderColor: "#cbd8ca", borderRadius: 14, shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" },
+    separator: { borderColor: "#cbd8ca", borderWidth: 1, borderStyle: "solid" },
+  },
+  minimal: {
+    page: "#ffffff",
+    heading: { color: "#111827", backgroundColor: "transparent", fontFamily: "sans", fontWeight: 900, borderWidth: 0, borderColor: "#111827", borderRadius: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    body: { color: "#4b5563", backgroundColor: "transparent", fontFamily: "sans", fontWeight: 400, borderWidth: 0, borderColor: "#d1d5db", borderRadius: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    button: { color: "#ffffff", backgroundColor: "#111827", fontFamily: "sans", fontWeight: 700, borderWidth: 0, borderColor: "#111827", borderRadius: 4, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    image: { borderWidth: 0, borderColor: "#d1d5db", borderRadius: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    separator: { borderColor: "#d1d5db", borderWidth: 1, borderStyle: "solid" },
+  },
+  japanese: {
+    page: "#f8f6f1",
+    heading: { color: "#262522", backgroundColor: "transparent", fontFamily: "serif", fontWeight: 700, borderWidth: 0, borderColor: "#8b3f3f", borderRadius: 2, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    body: { color: "#625e55", backgroundColor: "transparent", fontFamily: "serif", fontWeight: 400, borderWidth: 0, borderColor: "#d8c9b5", borderRadius: 2, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    button: { color: "#ffffff", backgroundColor: "#8b3f3f", fontFamily: "serif", fontWeight: 700, borderWidth: 0, borderColor: "#713333", borderRadius: 3, shadow: "none", depth: "none", borderStyle: "none", glow: "none" },
+    image: { borderWidth: 1, borderColor: "#d8c9b5", borderRadius: 2, shadow: "none", depth: "none", borderStyle: "solid", glow: "none" },
+    separator: { borderColor: "#d8c9b5", borderWidth: 1, borderStyle: "solid" },
+  },
 };
 
 const stylePresetSpacing = {
-  casual: { layoutGap: 28, heading: { padding: 24, margin: 8, lineHeight: 1.35 }, body: { padding: 22, margin: 14, lineHeight: 1.85 }, image: { margin: 18 }, button: { margin: 14 } },
-  pop: { layoutGap: 32, heading: { padding: 28, margin: 10, lineHeight: 1.35 }, body: { padding: 24, margin: 18, lineHeight: 1.8 }, image: { margin: 22 }, button: { margin: 16 } },
-  sweet: { layoutGap: 30, heading: { padding: 28, margin: 10, lineHeight: 1.4 }, body: { padding: 22, margin: 16, lineHeight: 1.9 }, image: { margin: 20 }, button: { margin: 16 } },
-  blog: { layoutGap: 24, heading: { padding: 16, margin: 8, lineHeight: 1.35 }, body: { padding: 10, margin: 20, lineHeight: 2 }, image: { margin: 18 }, button: { margin: 12 } },
-  business: { layoutGap: 16, heading: { padding: 14, margin: 4, lineHeight: 1.25 }, body: { padding: 12, margin: 8, lineHeight: 1.6 }, image: { margin: 10 }, button: { margin: 8 } },
+  casual: { contentWidth: 960, paddingX: 32, paddingY: 56, layoutGap: 28, heading: { padding: 24, margin: 8, lineHeight: 1.35 }, body: { padding: 22, margin: 14, lineHeight: 1.85 }, image: { margin: 18 }, button: { margin: 14 } },
+  pop: { contentWidth: 1040, paddingX: 40, paddingY: 64, layoutGap: 32, heading: { padding: 28, margin: 10, lineHeight: 1.35 }, body: { padding: 24, margin: 18, lineHeight: 1.8 }, image: { margin: 22 }, button: { margin: 16 } },
+  sweet: { contentWidth: 900, paddingX: 32, paddingY: 56, layoutGap: 30, heading: { padding: 28, margin: 10, lineHeight: 1.4 }, body: { padding: 22, margin: 16, lineHeight: 1.9 }, image: { margin: 20 }, button: { margin: 16 } },
+  blog: { contentWidth: 720, paddingX: 24, paddingY: 48, layoutGap: 24, heading: { padding: 16, margin: 8, lineHeight: 1.35 }, body: { padding: 10, margin: 20, lineHeight: 2 }, image: { margin: 18 }, button: { margin: 12 } },
+  business: { contentWidth: 880, paddingX: 24, paddingY: 40, layoutGap: 16, heading: { padding: 14, margin: 4, lineHeight: 1.25 }, body: { padding: 12, margin: 8, lineHeight: 1.6 }, image: { margin: 10 }, button: { margin: 8 } },
+  natural: { contentWidth: 920, paddingX: 32, paddingY: 56, layoutGap: 28, heading: { padding: 20, margin: 8, lineHeight: 1.5 }, body: { padding: 16, margin: 14, lineHeight: 1.9 }, image: { margin: 18 }, button: { margin: 12 } },
+  minimal: { contentWidth: 1000, paddingX: 48, paddingY: 64, layoutGap: 32, heading: { padding: 8, margin: 12, lineHeight: 1.2 }, body: { padding: 0, margin: 18, lineHeight: 1.8 }, image: { margin: 24 }, button: { margin: 14 } },
+  japanese: { contentWidth: 880, paddingX: 28, paddingY: 52, layoutGap: 22, heading: { padding: 12, margin: 8, lineHeight: 1.45 }, body: { padding: 8, margin: 14, lineHeight: 1.9 }, image: { margin: 16 }, button: { margin: 10 } },
 };
 
 projectSetupForm.addEventListener("submit", (event) => {
@@ -225,12 +298,22 @@ document.querySelectorAll("[data-collapsible]").forEach((section) => {
   });
 });
 
+document.querySelectorAll("[data-preview-viewport]").forEach((button) => button.addEventListener("click", () => {
+  const viewport = button.dataset.previewViewport;
+  previewFrameWrap.dataset.viewport = viewport;
+  document.querySelectorAll("[data-preview-viewport]").forEach((candidate) => candidate.setAttribute("aria-pressed", String(candidate === button)));
+}));
+
 contextMenu.querySelectorAll("[data-context-action]").forEach((button) => button.addEventListener("click", () => setColumnAnchor(button.dataset.contextAction)));
 document.addEventListener("click", (event) => { if (!contextMenu.hidden && !contextMenu.contains(event.target)) closeContextMenu(); });
 document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeContextMenu(); });
 
 function snapshotModel() {
   return structuredClone({ page: model.page, layout: model.layout, layoutDirection: model.layoutDirection, layoutGap: model.layoutGap, layoutRatios: model.layoutRatios, columns: model.columns, groups: model.groups, elements: model.elements, selectedIds: model.selectedIds, selectedColumn: model.selectedColumn, selectedGroupId: model.selectedGroupId, selectedColumns: model.selectedColumns, selectedBackground: model.selectedBackground, selectedStyle: model.selectedStyle, activePreset: model.activePreset, activeStylePreset: model.activeStylePreset || "" });
+}
+
+function projectSnapshot() {
+  return structuredClone({ page: model.page, layout: model.layout, layoutDirection: model.layoutDirection, layoutGap: model.layoutGap, layoutRatios: model.layoutRatios, columns: model.columns, groups: model.groups, elements: model.elements, activePreset: model.activePreset, activeStylePreset: model.activeStylePreset || "" });
 }
 
 function applyStylePreset(name) {
@@ -240,11 +323,21 @@ function applyStylePreset(name) {
   model.page.backgroundColor = preset.page;
   model.elements.forEach((element) => {
     const partStyle = preset[element.type];
-    if (partStyle) Object.assign(element.style, partStyle);
+    if (partStyle) {
+      if (Object.prototype.hasOwnProperty.call(partStyle, "backgroundColor")) delete element.style.background;
+      Object.assign(element.style, partStyle);
+    }
     const spacing = stylePresetSpacing[name]?.[element.type];
-    if (spacing) Object.assign(element.style, spacing);
+    if (spacing) {
+      if (Object.prototype.hasOwnProperty.call(spacing, "padding")) ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"].forEach((side) => delete element.style[side]);
+      if (Object.prototype.hasOwnProperty.call(spacing, "margin")) ["marginTop", "marginRight", "marginBottom", "marginLeft"].forEach((side) => delete element.style[side]);
+      Object.assign(element.style, spacing);
+    }
   });
   if (stylePresetSpacing[name]) {
+    model.page.contentWidth = stylePresetSpacing[name].contentWidth;
+    model.page.paddingX = stylePresetSpacing[name].paddingX;
+    model.page.paddingY = stylePresetSpacing[name].paddingY;
     model.layoutGap = stylePresetSpacing[name].layoutGap;
     model.groups.forEach((group) => { group.gap = stylePresetSpacing[name].layoutGap; });
   }
@@ -345,6 +438,8 @@ const controls = {
   fontFamily: document.querySelector("#font-family"),
   lineHeight: document.querySelector("#line-height"),
   lineHeightValue: document.querySelector("#line-height-value"),
+  letterSpacing: document.querySelector("#letter-spacing"),
+  letterSpacingValue: document.querySelector("#letter-spacing-value"),
   padding: document.querySelector("#padding"),
   paddingValue: document.querySelector("#padding-value"),
   margin: document.querySelector("#margin"),
@@ -356,8 +451,18 @@ const controls = {
   radius: document.querySelector("#radius"),
   radiusValue: document.querySelector("#radius-value"),
 };
+const spacingDetailFields = ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "marginTop", "marginRight", "marginBottom", "marginLeft"];
+const spacingDetailToggle = document.querySelector("[data-spacing-detail]");
+const spacingDetailPanel = document.querySelector("#spacing-detail-panel");
+const spacingDetailControls = Object.fromEntries(spacingDetailFields.map((key) => [key, { input: document.querySelector(`#${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`), output: document.querySelector(`#${key.replace(/([A-Z])/g, "-$1").toLowerCase()}-value`) }]));
 const buttonFontFamily = document.querySelector("#button-font-family");
 const buttonFontWeight = document.querySelector("#button-font-weight");
+const buttonFontSize = document.querySelector("#button-font-size");
+const buttonFontSizeValue = document.querySelector("#button-font-size-value");
+const buttonLineHeight = document.querySelector("#button-line-height");
+const buttonLineHeightValue = document.querySelector("#button-line-height-value");
+const buttonLetterSpacing = document.querySelector("#button-letter-spacing");
+const buttonLetterSpacingValue = document.querySelector("#button-letter-spacing-value");
 
 function selectedElement() {
   return model.elements.find((element) => element.id === model.selectedIds[0]) || model.elements[0];
@@ -384,21 +489,56 @@ function fontFamilyFor(value) {
   }[value] || 'system-ui, -apple-system, "Segoe UI", sans-serif';
 }
 
+function backgroundDeclarations(style, fallback = "transparent") {
+  const background = style?.background;
+  const color = style?.backgroundColor || fallback;
+  if (!background || background.type === "solid") return [`background-color: ${color};`];
+  const color1 = background.color || color;
+  const color2 = background.color2 || color1;
+  const angle = Number.isFinite(Number(background.angle)) ? Number(background.angle) : 135;
+  const image = background.type === "radial" ? `radial-gradient(circle, ${color1}, ${color2})` : `linear-gradient(${angle}deg, ${color1}, ${color2})`;
+  return [`background-color: ${color1};`, `background-image: ${image};`];
+}
+
+function fontSizeCss(style, fallback = 16) {
+  const size = Number(style?.fontSize) || fallback;
+  const responsive = newResponsiveFontSize(style?.responsiveFontSize);
+  if (!responsive.enabled) return `${size}px`;
+  const min = Math.min(Number(responsive.min) || size, Number(responsive.max) || size);
+  const max = Math.max(Number(responsive.min) || size, Number(responsive.max) || size);
+  const preferred = `calc(${min}px + ${(max - min).toFixed(2)} * ((100vw - 360px) / 840))`;
+  return `clamp(${min}px, ${preferred}, ${max}px)`;
+}
+
 const googleFontImport = '@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Noto+Serif+JP:wght@400;700;900&family=Zen+Maru+Gothic:wght@400;700;900&display=swap");';
 
 function cssFor(element) {
-  const buttonDefaults = { color: "#ffffff", backgroundColor: "#2563eb", fontFamily: "system", fontSize: 16, fontWeight: 700, textAlign: "center", verticalAlign: "center", lineHeight: 1.4, padding: 12, margin: 12, width: 48, height: 48, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, buttonAlign: "center", shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" };
-  const bodyDefaults = { color: "#334155", backgroundColor: "#ffffff", fontFamily: "system", fontSize: 18, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.8, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
+  const buttonDefaults = { color: "#ffffff", backgroundColor: "#2563eb", fontFamily: "system", fontSize: 16, fontWeight: 700, textAlign: "center", verticalAlign: "center", lineHeight: 1.4, letterSpacing: 0, padding: 12, margin: 12, width: 48, height: 48, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, buttonAlign: "center", shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" };
+  const bodyDefaults = { color: "#334155", backgroundColor: "#ffffff", fontFamily: "system", fontSize: 18, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.8, letterSpacing: 0, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
   const headingDefaults = { ...initialModel.elements[0].style };
   const rawStyle = Object.fromEntries(Object.entries(element.style || {}).filter(([, value]) => value !== undefined && value !== null && value !== ""));
   const s = { ...(element.type === "button" ? buttonDefaults : element.type === "body" ? bodyDefaults : element.type === "heading" ? headingDefaults : bodyDefaults), ...rawStyle };
   const effectiveBackgroundColor = s.backgroundColor || (element.type === "image" || element.type === "separator" ? "transparent" : "#ffffff");
-  const effectivePadding = ["heading", "body"].includes(element.type) && effectiveBackgroundColor === "transparent" ? 0 : s.padding;
+  const backgroundCss = backgroundDeclarations(s, effectiveBackgroundColor);
+  const edge = (name, fallback) => Number.isFinite(Number(s[name])) ? Number(s[name]) : fallback;
+  const paddingTop = edge("paddingTop", s.padding);
+  const paddingRight = edge("paddingRight", s.padding);
+  const paddingBottom = edge("paddingBottom", s.padding);
+  const paddingLeft = edge("paddingLeft", s.padding);
+  const marginTop = edge("marginTop", s.margin);
+  const marginRight = edge("marginRight", s.margin);
+  const marginBottom = edge("marginBottom", s.margin);
+  const marginLeft = edge("marginLeft", s.margin);
+  const hasCustomPadding = ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"].some((key) => Number.isFinite(Number(s[key])));
+  const transparentTextPadding = ["heading", "body"].includes(element.type) && effectiveBackgroundColor === "transparent" && !hasCustomPadding;
+  const effectivePadding = transparentTextPadding ? "0px" : `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`;
+  const effectiveMargin = `${marginTop}px ${marginRight}px ${marginBottom}px ${marginLeft}px`;
+  const hasCustomMargin = ["marginTop", "marginRight", "marginBottom", "marginLeft"].some((key) => Number.isFinite(Number(s[key])));
   const imageMargin = element.type === "image"
-    ? { left: `${s.margin}px auto ${s.margin}px 0`, center: `${s.margin}px auto`, right: `${s.margin}px 0 ${s.margin}px auto` }[s.imagePosition || "center"]
+    ? hasCustomMargin ? effectiveMargin : { left: `${marginTop}px auto ${marginBottom}px 0`, center: `${marginTop}px auto ${marginBottom}px auto`, right: `${marginTop}px 0 ${marginBottom}px auto` }[s.imagePosition || "center"]
     : element.type === "button"
-      ? `${s.margin}px ${s.buttonAlign === "right" ? "0" : s.buttonAlign === "left" ? "auto" : "auto"} ${s.margin}px ${s.buttonAlign === "left" ? "0" : s.buttonAlign === "right" ? "auto" : "auto"}`
-      : `${s.margin}px auto`;
+      ? hasCustomMargin ? effectiveMargin : `${marginTop}px ${s.buttonAlign === "right" ? "0" : s.buttonAlign === "left" ? "auto" : "auto"} ${marginBottom}px ${s.buttonAlign === "left" ? "0" : s.buttonAlign === "right" ? "auto" : "auto"}`
+      : effectiveMargin;
   const border = s.borderStyle === "double" ? `${Math.max(3, s.borderWidth)}px double ${s.borderColor}` : `${s.borderWidth}px solid ${s.borderColor}`;
   const shadows = [
     { none: "none", soft: `${Number(s.shadowOffsetX || 0)}px ${8 + Number(s.shadowOffsetY || 0)}px 20px rgba(30,52,79,.14)`, strong: `${Number(s.shadowOffsetX || 0)}px ${12 + Number(s.shadowOffsetY || 0)}px 28px rgba(30,52,79,.28)` }[s.shadow],
@@ -418,15 +558,16 @@ function cssFor(element) {
   return [
     `color: ${s.color};`,
     `font-family: ${fontFamilyFor(s.fontFamily)};`,
-    `background-color: ${effectiveBackgroundColor};`,
-    `font-size: ${s.fontSize}px;`,
+    ...backgroundCss,
+    `font-size: ${fontSizeCss(s, element.type === "heading" ? 42 : 16)};`,
     `font-weight: ${s.fontWeight};`,
     `text-shadow: ${combinedTextShadow};`,
     `text-align: ${s.textAlign};`,
     ["heading", "body"].includes(element.type) ? "display: flex; flex-direction: column;" : "",
     ["heading", "body"].includes(element.type) ? `justify-content: ${{ top: "flex-start", center: "center", bottom: "flex-end" }[s.verticalAlign || "top"]};` : "",
     `line-height: ${s.lineHeight};`,
-    `padding: ${effectivePadding}px;`,
+    `letter-spacing: ${Number(s.letterSpacing || 0)}em;`,
+    `padding: ${effectivePadding};`,
     `margin: ${imageMargin};`,
     `width: ${s.width}%;`,
     element.type === "button" ? `min-height: ${s.height || 48}px;` : "",
@@ -436,7 +577,7 @@ function cssFor(element) {
     element.type === "separator" ? "height: 0; min-height: 0; padding: 0;" : "",
     element.type === "image" ? "display: block;" : "",
     element.type === "image" ? `object-fit: ${s.objectFit || "contain"};` : "",
-    element.type === "image" ? `transform: translate(${s.offsetX || 0}px, ${s.offsetY || 0}px);` : "",
+    ["heading", "body", "button", "image"].includes(element.type) ? `transform: translate(${s.offsetX || 0}px, ${s.offsetY || 0}px);` : "",
     `box-shadow: ${shadows.length ? shadows.join(", ") : "none"};`,
   ].join(" ");
 }
@@ -515,6 +656,13 @@ function isColumnSelected(groupId, column) {
   return model.selectedColumns.includes(columnSelectionKey(groupId, column));
 }
 
+function cssForGroup(group) {
+  const s = { ...groupStyleDefaults, ...(group.style || {}) };
+  const shadow = s.shadow === "soft" ? "0 10px 25px rgba(92,60,39,.10)" : s.shadow === "strong" ? "0 18px 45px rgba(92,60,39,.16)" : "none";
+  const background = backgroundDeclarations(s, "transparent").join("");
+  return `${background}padding:${Number(s.padding) || 0}px;margin:${Number(s.margin) || 0}px 0;border:${Number(s.borderWidth) || 0}px solid ${s.borderColor || groupStyleDefaults.borderColor};border-radius:${Number(s.borderRadius) || 0}px;box-shadow:${shadow};`;
+}
+
 function groupMarkup(group, { inlineStyles = false, preview = false, source = false } = {}) {
   const columns = group.columns;
   const columnMarkup = columns.map((column) => {
@@ -585,6 +733,10 @@ function imageAssetPath(element) {
   return `images/${element.id}${imageExtension(element.src)}`;
 }
 
+function responsiveCss() {
+  return `@media (max-width: 720px) { .page { padding: 28px 16px !important; } .hero { max-width: 100% !important; } .layout-split, .nested-layout.layout-row { grid-template-columns: minmax(0, 1fr) !important; } .layout-column { min-width: 0; } .button-element { max-width: 100%; } }`;
+}
+
 function formatCssForSource(css) {
   return css.replace(/([^{}]+)\{([^{}]*)\}/g, (_, selector, declarations) => {
     const lines = declarations.split(";").map((declaration) => declaration.trim()).filter(Boolean).map((declaration) => `  ${declaration};`);
@@ -596,8 +748,8 @@ function generatedCss({ source = false } = {}) {
   const elementCss = model.elements.map((element) => `#${element.id} { ${cssFor(element)} }`).join("\n");
   const layoutRule = layoutDeclaration(model.layoutDirection, model.layoutRatios, model.layoutGap);
   const columnFlex = model.layoutDirection === "column" ? ".layout-column { flex: 0 0 auto; }" : "";
-  const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"] { ${layoutDeclaration(group.direction, group.ratios, group.gap)} }`).join("\n");
-  const css = `html, body { margin: 0; min-height: 100%; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }\n.page { min-height: 100vh; box-sizing: border-box; padding: 48px 24px; ${pageBackgroundDeclaration({ source })} }\n.hero { max-width: 760px; margin: 0 auto; }\n.layout-split { ${layoutRule} }\n.nested-layout { width: 100%; max-width: 100%; min-width: 0; }\n.layout-column { box-sizing: border-box; width: 100%; min-width: 0; min-height: 0; padding: 8px; border-radius: 12px; }\n.layout-column.is-empty { min-height: 130px; }\n.text-element { box-sizing: border-box; max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }\n.heading-element, .body-element { background-color: #ffffff; }\n.button-element { display: block; background-color: #2563eb; color: #ffffff; text-decoration: none; }\n${columnFlex}\n${groupCss}\n${elementCss}`;
+  const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"] { ${layoutDeclaration(group.direction, group.ratios, group.gap)} ${cssForGroup(group)} }`).join("\n");
+  const css = `html, body { margin: 0; min-height: 100%; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }\n.page { min-height: 100vh; box-sizing: border-box; padding: ${model.page.paddingY ?? 48}px ${model.page.paddingX ?? 24}px; ${pageBackgroundDeclaration({ source })} }\n.hero { max-width: ${model.page.contentWidth ?? 760}px; margin: 0 auto; }\n.layout-split { ${layoutRule} }\n.nested-layout { width: 100%; max-width: 100%; min-width: 0; }\n.layout-column { box-sizing: border-box; width: 100%; min-width: 0; min-height: 0; padding: 8px; border-radius: 12px; }\n.layout-column.is-empty { min-height: 130px; }\n.text-element { box-sizing: border-box; max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }\n.heading-element, .body-element { background-color: #ffffff; }\n.button-element { display: block; background-color: #2563eb; color: #ffffff; text-decoration: none; }\n${columnFlex}\n${groupCss}\n${elementCss}\n${responsiveCss()}`;
   return `${googleFontImport}\n${source ? formatCssForSource(css) : css}`;
 }
 
@@ -605,9 +757,9 @@ function previewDocument() {
   const elementCss = model.elements.map((element) => `#${element.id}{${cssFor(element)}}`).join("");
   const layoutRule = layoutDeclaration(model.layoutDirection, model.layoutRatios, model.layoutGap);
   const columnFlex = model.layoutDirection === "column" ? ".layout-column{flex:0 0 auto}" : "";
-  const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"]{${layoutDeclaration(group.direction, group.ratios, group.gap)}}`).join("");
+  const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"]{${layoutDeclaration(group.direction, group.ratios, group.gap)}${cssForGroup(group)}}`).join("");
   const anchorCss = ".layout-column[data-anchor-label]{position:relative}.layout-column[data-anchor-label]::after{content:attr(data-anchor-label);position:absolute;top:8px;left:-1px;z-index:2;max-width:calc(100% - 16px);overflow:hidden;padding:2px 7px;border-radius:0 6px 6px 0;background:#dff4ff;color:#075985;font-size:10px;font-weight:800;line-height:1.25;pointer-events:none;white-space:nowrap;text-overflow:ellipsis}";
-  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>${escapeHtml(model.page.title)}</title><style>${googleFontImport}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.page{min-height:100vh;padding:48px 24px;${pageBackgroundDeclaration()};box-sizing:border-box}.hero{max-width:760px;margin:0 auto}.layout-split{${layoutRule}}${columnFlex}${groupCss}${anchorCss}.nested-layout{width:100%;max-width:100%;min-width:0}.layout-column{box-sizing:border-box;width:100%;min-width:0;min-height:0;padding:8px;border-radius:12px}.layout-column.is-empty{min-height:130px}.layout-split > .layout-column:not(.layout-guide-column){background:rgba(138,180,255,.025);box-shadow:inset 0 0 0 1px rgba(138,180,255,.16)}.layout-column.is-active{background:rgba(37,99,235,.04)}.layout-column.is-column-selected{background:rgba(37,99,235,.12);outline:3px solid #2563eb;outline-offset:4px}.layout-guide-column{position:relative;display:flex;flex-direction:column;outline:2px dashed #8ab4ff;outline-offset:4px;background:rgba(138,180,255,.07)}.layout-guide-column.is-column-selected{outline:3px solid #2563eb;outline-offset:4px;background:rgba(37,99,235,.12)}.layout-guide-column::before{content:attr(data-layout-label);position:absolute;top:-13px;left:8px;padding:2px 6px;border-radius:999px;background:#e8f0ff;color:#2563eb;font-size:10px;font-weight:700;line-height:1.2;pointer-events:none}.empty-column{display:grid;height:100%;min-height:110px;box-sizing:border-box;place-items:center;border:2px dashed #b9d0ff;border-radius:12px;color:#6b86b5;font-size:13px}.column-add-zone{flex:1;min-height:110px;margin-top:8px}.layout-guide-column > .empty-column:not(.column-add-zone){border-color:transparent;background:transparent}.text-element{box-sizing:border-box;max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;cursor:pointer;transition:outline .15s ease,filter .2s ease;}.text-element:hover{outline:2px solid #8ab4ff;outline-offset:5px}.text-element.is-selected{outline:3px solid #111827;outline-offset:6px}.text-element.is-selected-2{outline-color:#2563eb}.text-element.is-selected-3{outline-color:#7c3aed}.text-element[contenteditable="true"]{outline:3px solid #2563eb;outline-offset:6px;cursor:text}</style></head><body>${generatedHtml({ inlineStyles: true, preview: true })}<script>document.querySelectorAll('.text-element').forEach((element)=>{let clickTimer;element.addEventListener('click',(event)=>{if(element.classList.contains('button-element'))event.preventDefault();event.stopPropagation();clearTimeout(clickTimer);clickTimer=setTimeout(()=>parent.postMessage({type:'select',id:element.dataset.elementId,column:element.closest('.layout-column')?.dataset.columnId,groupId:element.closest('.layout-column')?.dataset.groupId,shift:event.shiftKey},'*'),220)});element.addEventListener('dblclick',(event)=>{if(element.dataset.editable!=='true')return;event.stopPropagation();clearTimeout(clickTimer);element.dataset.originalText=element.innerText;element.contentEditable='true';element.focus();const range=document.caretRangeFromPoint?.(event.clientX,event.clientY);const selection=window.getSelection();if(range&&element.contains(range.startContainer)){selection.removeAllRanges();selection.addRange(range)}else{const fallback=document.createRange();fallback.selectNodeContents(element);fallback.collapse(false);selection.removeAllRanges();selection.addRange(fallback)}parent.postMessage({type:'edit-start',id:element.dataset.elementId},'*')});element.addEventListener('input',()=>parent.postMessage({type:'edit-content',id:element.dataset.elementId,content:element.innerText},'*'));element.addEventListener('keydown',(event)=>{if(event.key==='Escape'){element.innerText=element.dataset.originalText||element.innerText;element.blur()}});element.addEventListener('blur',()=>{element.contentEditable='false';parent.postMessage({type:'edit-end',id:element.dataset.elementId},'*')})});document.querySelectorAll('.layout-column').forEach((column)=>column.addEventListener('click',(event)=>{if(event.target===column||event.target.classList.contains('empty-column')){event.stopPropagation();parent.postMessage({type:'select-column',column:column.dataset.columnId,groupId:column.dataset.groupId,shift:event.shiftKey},'*')}}));document.querySelectorAll('.text-element,.layout-column').forEach((target)=>target.addEventListener('contextmenu',(event)=>{event.preventDefault();const element=event.target.closest('.text-element');parent.postMessage({type:'context-menu',id:element?.dataset.elementId,column:target.closest('.layout-column')?.dataset.columnId,groupId:target.closest('.layout-column')?.dataset.groupId,x:event.clientX,y:event.clientY},'*')}));window.addEventListener('scroll',()=>parent.postMessage({type:'preview-scroll',top:window.scrollY},'*'));document.body.addEventListener('click',()=>parent.postMessage({type:'clear-selection'},'*'));window.addEventListener('message',(event)=>{if(event.data?.type==='restore-scroll'){window.scrollTo(0,Math.max(0,Number(event.data.top)||0));}if(event.data?.type==='focus'){const target=document.getElementById(event.data.id);if(target){target.scrollIntoView({block:'center',behavior:'smooth'});target.animate([{filter:'brightness(1.12)'},{filter:'brightness(1)'}],{duration:450});}}});<\/script></body></html>`;
+  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>${escapeHtml(model.page.title)}</title><style>${googleFontImport}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.page{min-height:100vh;padding:${model.page.paddingY ?? 48}px ${model.page.paddingX ?? 24}px;${pageBackgroundDeclaration()};box-sizing:border-box}.hero{max-width:${model.page.contentWidth ?? 760}px;margin:0 auto}.layout-split{${layoutRule}}${columnFlex}${groupCss}${anchorCss}.nested-layout{width:100%;max-width:100%;min-width:0}.layout-column{box-sizing:border-box;width:100%;min-width:0;min-height:0;padding:8px;border-radius:12px}.layout-column.is-empty{min-height:130px}.layout-split > .layout-column:not(.layout-guide-column){background:rgba(138,180,255,.025);box-shadow:inset 0 0 0 1px rgba(138,180,255,.16)}.layout-column.is-active{background:rgba(37,99,235,.04)}.layout-column.is-column-selected{background:rgba(37,99,235,.12);outline:3px solid #2563eb;outline-offset:4px}.layout-guide-column{position:relative;display:flex;flex-direction:column;outline:2px dashed #8ab4ff;outline-offset:4px;background:rgba(138,180,255,.07)}.layout-guide-column.is-column-selected{outline:3px solid #2563eb;outline-offset:4px;background:rgba(37,99,235,.12)}.layout-guide-column::before{content:attr(data-layout-label);position:absolute;top:-13px;left:8px;padding:2px 6px;border-radius:999px;background:#e8f0ff;color:#2563eb;font-size:10px;font-weight:700;line-height:1.2;pointer-events:none}.empty-column{display:grid;height:100%;min-height:110px;box-sizing:border-box;place-items:center;border:2px dashed #b9d0ff;border-radius:12px;color:#6b86b5;font-size:13px}.column-add-zone{flex:1;min-height:110px;margin-top:8px}.layout-guide-column > .empty-column:not(.column-add-zone){border-color:transparent;background:transparent}.text-element{box-sizing:border-box;max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;cursor:pointer;transition:outline .15s ease,filter .2s ease;}.text-element:hover{outline:2px solid #8ab4ff;outline-offset:5px}.text-element.is-selected{outline:3px solid #111827;outline-offset:6px}.text-element.is-selected-2{outline-color:#2563eb}.text-element.is-selected-3{outline-color:#7c3aed}.text-element[contenteditable="true"]{outline:3px solid #2563eb;outline-offset:6px;cursor:text}${responsiveCss()}</style></head><body>${generatedHtml({ inlineStyles: true, preview: true })}<script>document.querySelectorAll('.text-element').forEach((element)=>{let clickTimer;element.addEventListener('click',(event)=>{if(element.classList.contains('button-element'))event.preventDefault();event.stopPropagation();clearTimeout(clickTimer);clickTimer=setTimeout(()=>parent.postMessage({type:'select',id:element.dataset.elementId,column:element.closest('.layout-column')?.dataset.columnId,groupId:element.closest('.layout-column')?.dataset.groupId,shift:event.shiftKey},'*'),220)});element.addEventListener('dblclick',(event)=>{if(element.dataset.editable!=='true')return;event.stopPropagation();clearTimeout(clickTimer);element.dataset.originalText=element.innerText;element.contentEditable='true';element.focus();const range=document.caretRangeFromPoint?.(event.clientX,event.clientY);const selection=window.getSelection();if(range&&element.contains(range.startContainer)){selection.removeAllRanges();selection.addRange(range)}else{const fallback=document.createRange();fallback.selectNodeContents(element);fallback.collapse(false);selection.removeAllRanges();selection.addRange(fallback)}parent.postMessage({type:'edit-start',id:element.dataset.elementId},'*')});element.addEventListener('input',()=>parent.postMessage({type:'edit-content',id:element.dataset.elementId,content:element.innerText},'*'));element.addEventListener('keydown',(event)=>{if(event.key==='Escape'){element.innerText=element.dataset.originalText||element.innerText;element.blur()}});element.addEventListener('blur',()=>{element.contentEditable='false';parent.postMessage({type:'edit-end',id:element.dataset.elementId},'*')})});document.querySelectorAll('.layout-column').forEach((column)=>column.addEventListener('click',(event)=>{if(event.target===column||event.target.classList.contains('empty-column')){event.stopPropagation();parent.postMessage({type:'select-column',column:column.dataset.columnId,groupId:column.dataset.groupId,shift:event.shiftKey},'*')}}));document.querySelectorAll('.text-element,.layout-column').forEach((target)=>target.addEventListener('contextmenu',(event)=>{event.preventDefault();const element=event.target.closest('.text-element');parent.postMessage({type:'context-menu',id:element?.dataset.elementId,column:target.closest('.layout-column')?.dataset.columnId,groupId:target.closest('.layout-column')?.dataset.groupId,x:event.clientX,y:event.clientY},'*')}));window.addEventListener('scroll',()=>parent.postMessage({type:'preview-scroll',top:window.scrollY},'*'));document.body.addEventListener('click',()=>parent.postMessage({type:'clear-selection'},'*'));window.addEventListener('message',(event)=>{if(event.data?.type==='restore-scroll'){window.scrollTo(0,Math.max(0,Number(event.data.top)||0));}if(event.data?.type==='focus'){const target=document.getElementById(event.data.id);if(target){target.scrollIntoView({block:'center',behavior:'smooth'});target.animate([{filter:'brightness(1.12)'},{filter:'brightness(1)'}],{duration:450});}}});<\/script></body></html>`;
 }
 
 function syncControls() {
@@ -625,9 +777,16 @@ function syncControls() {
   pageBackground.value = model.page.backgroundColor;
   backgroundSize.value = model.page.backgroundSize;
   backgroundPosition.value = model.page.backgroundPosition;
+  pageContentWidth.value = model.page.contentWidth || 760;
+  pageContentWidthValue.value = `${pageContentWidth.value}px`;
+  pagePaddingX.value = model.page.paddingX ?? 24;
+  pagePaddingXValue.value = `${pagePaddingX.value}px`;
+  pagePaddingY.value = model.page.paddingY ?? 48;
+  pagePaddingYValue.value = `${pagePaddingY.value}px`;
   undoButton.disabled = history.length === 0;
   deleteSection.hidden = count === 0;
   deleteButton.textContent = count > 1 ? `🗑 選択した${count}個を削除` : "🗑 このパーツを削除";
+  [duplicateButton, moveUpButton, moveDownButton].forEach((button) => { button.disabled = count !== 1; });
   layoutTools.hidden = !layoutActive;
   styleTools.hidden = editorType !== "style";
   deleteLayoutButton.hidden = !(model.selectedGroupId || model.columns.length > 1);
@@ -637,6 +796,34 @@ function syncControls() {
   document.querySelector("#layout-gap-field").hidden = activeGroup ? activeGroup.columns.length < 2 : model.columns.length < 2;
   layoutGap.value = activeGroup ? activeGroup.gap : model.layoutGap;
   layoutGapValue.value = `${layoutGap.value}px`;
+  const groupStyle = { ...groupStyleDefaults, ...(activeGroup?.style || {}) };
+  groupBackgroundNone.checked = groupStyle.backgroundColor === "transparent";
+  groupBackgroundColor.disabled = !activeGroup || groupBackgroundNone.checked;
+  groupBackgroundColor.value = groupBackgroundNone.checked ? "#ffffff" : groupStyle.backgroundColor;
+  const groupBackground = groupStyle.background || { type: "solid", color: groupStyle.backgroundColor, color2: groupStyle.backgroundColor, angle: 135 };
+  groupBackgroundGradient.disabled = !activeGroup;
+  groupBackgroundAngle.disabled = !activeGroup;
+  groupBackgroundColor1.disabled = !activeGroup;
+  groupBackgroundColor2.disabled = !activeGroup;
+  groupBackgroundGradient.value = groupBackground.type || "solid";
+  groupBackgroundAngle.value = groupBackground.angle ?? 135;
+  groupBackgroundColor1.value = groupBackground.color || "#ffffff";
+  groupBackgroundColor2.value = groupBackground.color2 || groupBackgroundColor1.value;
+  groupPadding.disabled = !activeGroup;
+  groupPadding.value = groupStyle.padding;
+  groupPaddingValue.value = `${groupStyle.padding}px`;
+  groupMargin.disabled = !activeGroup;
+  groupMargin.value = groupStyle.margin;
+  groupMarginValue.value = `${groupStyle.margin}px`;
+  groupRadius.disabled = !activeGroup;
+  groupRadius.value = groupStyle.borderRadius;
+  groupRadiusValue.value = `${groupStyle.borderRadius}px`;
+  groupBorderWidth.disabled = !activeGroup;
+  groupBorderWidth.value = groupStyle.borderWidth;
+  groupBorderColor.disabled = !activeGroup;
+  groupBorderColor.value = groupStyle.borderColor;
+  groupShadow.disabled = !activeGroup;
+  groupShadow.value = groupStyle.shadow;
   const selectedRatio = selectedLayoutRatio();
   const ratioEnabled = !hasSelection() && model.selectedColumns.length <= 1 && selectedRatio !== null;
   const config = selectedLayoutConfig();
@@ -674,12 +861,26 @@ function syncControls() {
   controls.backgroundNone.checked = s.backgroundColor === "transparent";
   controls.backgroundColor.disabled = controls.backgroundNone.checked;
   controls.backgroundColor.value = controls.backgroundNone.checked ? "#ffffff" : s.backgroundColor;
+  const elementBackground = s.background || { type: "solid", color: s.backgroundColor, color2: s.backgroundColor, angle: 135 };
+  backgroundGradient.value = elementBackground.type || "solid";
+  backgroundGradientAngle.value = elementBackground.angle ?? 135;
+  backgroundGradientColor1.value = elementBackground.color || (s.backgroundColor === "transparent" ? "#ffffff" : s.backgroundColor);
+  backgroundGradientColor2.value = elementBackground.color2 || backgroundGradientColor1.value;
   controls.fontSize.value = s.fontSize;
   controls.fontSizeValue.value = `${s.fontSize}px`;
+  const responsive = newResponsiveFontSize(s.responsiveFontSize);
+  fontSizeMode.value = responsive.enabled ? "responsive" : "fixed";
+  responsiveFontSizeTools.hidden = !responsive.enabled;
+  fontSizeMin.value = responsive.min;
+  fontSizeMinValue.value = `${responsive.min}px`;
+  fontSizeMax.value = responsive.max;
+  fontSizeMaxValue.value = `${responsive.max}px`;
   controls.fontFamily.value = s.fontFamily || "system";
   controls.fontWeight.value = [300, 400, 500, 600, 900].includes(Number(s.fontWeight)) ? String(s.fontWeight) : Number(s.fontWeight) >= 700 ? "600" : "400";
   controls.lineHeight.value = s.lineHeight;
   controls.lineHeightValue.value = s.lineHeight;
+  controls.letterSpacing.value = s.letterSpacing ?? 0;
+  controls.letterSpacingValue.value = `${Number(s.letterSpacing ?? 0).toFixed(2)}em`;
   controls.padding.value = s.padding;
   controls.paddingValue.value = `${s.padding}px`;
   controls.margin.value = s.margin;
@@ -690,6 +891,12 @@ function syncControls() {
   controls.borderColor.value = s.borderColor;
   controls.radius.value = s.borderRadius;
   controls.radiusValue.value = `${s.borderRadius}px`;
+  spacingDetailFields.forEach((key) => {
+    const fallback = key.startsWith("padding") ? s.padding : s.margin;
+    const value = Number.isFinite(Number(s[key])) ? Number(s[key]) : fallback;
+    spacingDetailControls[key].input.value = value;
+    spacingDetailControls[key].output.value = `${value}px`;
+  });
   document.querySelectorAll("[data-decoration]").forEach((button) => {
     const [key, value] = button.dataset.decoration.split(":");
     button.setAttribute("aria-pressed", String(String(s[key] ?? (key === "textStrokeWidth" ? 0 : "")) === value));
@@ -726,6 +933,11 @@ function syncControls() {
   imageOffsetXValue.value = element.type === "image" ? `${element.style.offsetX || 0}px` : "";
   imageOffsetY.value = element.type === "image" ? (element.style.offsetY || 0) : 0;
   imageOffsetYValue.value = element.type === "image" ? `${element.style.offsetY || 0}px` : "";
+  const textMovable = ["heading", "body", "button"].includes(element.type);
+  textOffsetX.value = textMovable ? (element.style.offsetX || 0) : 0;
+  textOffsetXValue.value = textMovable ? `${element.style.offsetX || 0}px` : "";
+  textOffsetY.value = textMovable ? (element.style.offsetY || 0) : 0;
+  textOffsetYValue.value = textMovable ? `${element.style.offsetY || 0}px` : "";
   document.querySelectorAll("[data-image-position]").forEach((button) => button.setAttribute("aria-pressed", String(element.type === "image" && (element.style.imagePosition || "center") === button.dataset.imagePosition)));
   const isButton = element.type === "button";
   buttonLabel.value = isButton ? element.content : "";
@@ -735,6 +947,12 @@ function syncControls() {
   buttonTextColor.value = isButton ? element.style.color : "#ffffff";
   buttonFontFamily.value = isButton ? (element.style.fontFamily || "system") : "system";
   buttonFontWeight.value = isButton ? ([300, 400, 500, 600, 900].includes(Number(element.style.fontWeight)) ? String(element.style.fontWeight) : Number(element.style.fontWeight) >= 700 ? "600" : "400") : "600";
+  buttonFontSize.value = isButton ? (element.style.fontSize || 16) : 16;
+  buttonFontSizeValue.value = isButton ? `${element.style.fontSize || 16}px` : "";
+  buttonLineHeight.value = isButton ? (element.style.lineHeight || 1.4) : 1.4;
+  buttonLineHeightValue.value = isButton ? (element.style.lineHeight || 1.4) : "";
+  buttonLetterSpacing.value = isButton ? (element.style.letterSpacing || 0) : 0;
+  buttonLetterSpacingValue.value = isButton ? `${Number(element.style.letterSpacing || 0).toFixed(2)}em` : "";
   buttonBackgroundColor.value = isButton ? element.style.backgroundColor : "#2563eb";
   buttonWidth.value = isButton ? element.style.width : 88;
   buttonWidthValue.value = isButton ? `${element.style.width}%` : "";
@@ -880,6 +1098,8 @@ function updateStyle(key, value) {
   if (!hasSelection()) return;
   beginStyleHistory();
   const element = selectedElement();
+  if (key === "padding") ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"].forEach((side) => delete element.style[side]);
+  if (key === "margin") ["marginTop", "marginRight", "marginBottom", "marginLeft"].forEach((side) => delete element.style[side]);
   element.style[key] = value;
   if (!patchPreviewElement(element)) render();
 }
@@ -975,14 +1195,38 @@ function setupPreviewDragAndDrop() {
 
 controls.content.addEventListener("input", (event) => { if (!hasSelection()) return; beginStyleHistory(); const element = selectedElement(); element.content = event.target.value; if (!patchPreviewContent(element)) render(); });
 controls.textColor.addEventListener("input", (event) => updateStyle("color", event.target.value));
-controls.backgroundColor.addEventListener("input", (event) => { controls.backgroundNone.checked = false; updateStyle("backgroundColor", event.target.value); });
-controls.backgroundNone.addEventListener("change", (event) => updateStyle("backgroundColor", event.target.checked ? "transparent" : controls.backgroundColor.value));
+controls.backgroundColor.addEventListener("input", (event) => { controls.backgroundNone.checked = false; if (hasSelection()) delete selectedElement().style.background; updateStyle("backgroundColor", event.target.value); });
+controls.backgroundNone.addEventListener("change", (event) => { if (hasSelection() && event.target.checked) updateStyle("background", { type: "solid", color: "transparent", color2: "transparent", angle: 135 }); updateStyle("backgroundColor", event.target.checked ? "transparent" : controls.backgroundColor.value); });
+function updateElementBackground() {
+  if (!hasSelection()) return;
+  controls.backgroundNone.checked = false;
+  updateStyle("background", { type: backgroundGradient.value, color: backgroundGradientColor1.value, color2: backgroundGradientColor2.value, angle: Number(backgroundGradientAngle.value) });
+}
+backgroundGradient.addEventListener("change", updateElementBackground);
+backgroundGradientAngle.addEventListener("input", updateElementBackground);
+backgroundGradientColor1.addEventListener("input", updateElementBackground);
+backgroundGradientColor2.addEventListener("input", updateElementBackground);
 controls.fontSize.addEventListener("input", (event) => updateStyle("fontSize", Number(event.target.value)));
+fontSizeMode.addEventListener("change", (event) => { if (!hasSelection()) return; const element = selectedElement(); const current = newResponsiveFontSize(element.style.responsiveFontSize); current.enabled = event.target.value === "responsive"; if (current.enabled) { current.min = Math.max(8, Math.round(Number(element.style.fontSize || 16) * 0.75)); current.max = Math.min(180, Math.round(Number(element.style.fontSize || 16) * 1.5)); } updateStyle("responsiveFontSize", current); });
+fontSizeMin.addEventListener("input", (event) => { fontSizeMinValue.value = `${event.target.value}px`; if (!hasSelection()) return; const current = newResponsiveFontSize(selectedElement().style.responsiveFontSize); current.enabled = true; current.min = Number(event.target.value); updateStyle("responsiveFontSize", current); });
+fontSizeMax.addEventListener("input", (event) => { fontSizeMaxValue.value = `${event.target.value}px`; if (!hasSelection()) return; const current = newResponsiveFontSize(selectedElement().style.responsiveFontSize); current.enabled = true; current.max = Number(event.target.value); updateStyle("responsiveFontSize", current); });
 controls.fontFamily.addEventListener("change", (event) => updateStyle("fontFamily", event.target.value));
 controls.fontWeight.addEventListener("change", (event) => updateStyle("fontWeight", Number(event.target.value)));
 controls.lineHeight.addEventListener("input", (event) => updateStyle("lineHeight", Number(event.target.value)));
+controls.letterSpacing.addEventListener("input", (event) => updateStyle("letterSpacing", Number(event.target.value)));
 controls.padding.addEventListener("input", (event) => updateStyle("padding", Number(event.target.value)));
 controls.margin.addEventListener("input", (event) => updateStyle("margin", Number(event.target.value)));
+spacingDetailToggle.addEventListener("click", () => {
+  const expanded = spacingDetailToggle.getAttribute("aria-expanded") === "true";
+  spacingDetailToggle.setAttribute("aria-expanded", String(!expanded));
+  spacingDetailPanel.hidden = expanded;
+});
+spacingDetailFields.forEach((key) => spacingDetailControls[key].input.addEventListener("input", (event) => {
+  if (!hasSelection()) return;
+  const value = Number(event.target.value);
+  spacingDetailControls[key].output.value = `${value}px`;
+  updateStyle(key, value);
+}));
 controls.width.addEventListener("input", (event) => updateStyle("width", Number(event.target.value)));
 controls.borderWidth.addEventListener("change", (event) => updateStyle("borderWidth", Number(event.target.value)));
 controls.borderColor.addEventListener("input", (event) => updateStyle("borderColor", event.target.value));
@@ -1008,6 +1252,9 @@ buttonTargetBlank.addEventListener("change", (event) => updateButton({ target: e
 buttonTextColor.addEventListener("input", (event) => updateButtonStyle("color", event.target.value));
 buttonFontFamily.addEventListener("change", (event) => updateButtonStyle("fontFamily", event.target.value));
 buttonFontWeight.addEventListener("change", (event) => updateButtonStyle("fontWeight", Number(event.target.value)));
+buttonFontSize.addEventListener("input", (event) => updateButtonStyle("fontSize", Number(event.target.value)));
+buttonLineHeight.addEventListener("input", (event) => updateButtonStyle("lineHeight", Number(event.target.value)));
+buttonLetterSpacing.addEventListener("input", (event) => updateButtonStyle("letterSpacing", Number(event.target.value)));
 buttonBackgroundColor.addEventListener("input", (event) => updateButtonStyle("backgroundColor", event.target.value));
 buttonWidth.addEventListener("input", (event) => updateButtonStyle("width", Number(event.target.value)));
 buttonHeight.addEventListener("input", (event) => updateButtonStyle("height", Number(event.target.value)));
@@ -1029,6 +1276,8 @@ separatorColor.addEventListener("input", (event) => { if (hasSelection() && sele
 separatorStyle.addEventListener("change", (event) => { if (hasSelection() && selectedElement().type === "separator") { updateStyle("borderStyle", event.target.value); } });
 imageOffsetX.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("offsetX", Number(event.target.value)); } });
 imageOffsetY.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("offsetY", Number(event.target.value)); } });
+textOffsetX.addEventListener("input", (event) => { if (hasSelection() && ["heading", "body", "button"].includes(selectedElement().type)) { textOffsetXValue.value = `${event.target.value}px`; updateStyle("offsetX", Number(event.target.value)); } });
+textOffsetY.addEventListener("input", (event) => { if (hasSelection() && ["heading", "body", "button"].includes(selectedElement().type)) { textOffsetYValue.value = `${event.target.value}px`; updateStyle("offsetY", Number(event.target.value)); } });
 document.querySelectorAll("[data-image-position]").forEach((button) => button.addEventListener("click", () => {
   if (!hasSelection() || selectedElement().type !== "image") return;
   pushHistory();
@@ -1157,7 +1406,7 @@ async function exportWebPackage() {
 }
 
 document.querySelector("#save-project").addEventListener("click", async () => {
-  await saveTextFile(`${(model.page.filename || "my-homepage").replace(/\.html?$/i, "")}.0en.json`, JSON.stringify(snapshotModel(), null, 2), "application/json;charset=utf-8");
+  await saveTextFile(`${(model.page.filename || "my-homepage").replace(/\.html?$/i, "")}.0en.json`, JSON.stringify(projectSnapshot(), null, 2), "application/json;charset=utf-8");
 });
 document.querySelector("#load-project").addEventListener("click", () => loadProjectFile.click());
 loadProjectFile.addEventListener("change", (event) => {
@@ -1171,7 +1420,12 @@ loadProjectFile.addEventListener("change", (event) => {
       pushHistory();
       Object.assign(model, saved);
       model.page = { ...structuredClone(initialModel.page), ...saved.page };
-      model.selectedStyle = saved.selectedStyle === true;
+      model.groups = (model.groups || []).map((group) => ({ ...group, style: newGroupStyle(group.style) }));
+      model.selectedIds = [];
+      model.selectedColumns = [];
+      model.selectedGroupId = null;
+      model.selectedColumn = model.columns[0] || "left";
+      model.selectedStyle = true;
       model.selectedBackground = false;
       document.querySelector("#app-page-title").textContent = model.page.title;
       document.querySelector("#footer-page-title").textContent = model.page.title;
@@ -1213,11 +1467,11 @@ loadHtmlFile.addEventListener("change", (event) => {
       const isButton = node.matches("a.button-element");
       const type = isImage ? "image" : isSeparator ? "separator" : isButton ? "button" : node.tagName.toLowerCase() === "p" ? "body" : "heading";
       const baseStyle = type === "body"
-        ? { color: "#334155", backgroundColor: "#ffffff", fontSize: 18, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.8, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" }
+        ? { color: "#334155", backgroundColor: "#ffffff", fontSize: 18, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.8, letterSpacing: 0, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" }
         : type === "image"
-          ? { color: "#18222f", backgroundColor: "transparent", fontSize: 16, fontWeight: 400, textAlign: "left", lineHeight: 1.4, padding: 0, margin: 16, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, imagePosition: "center", objectFit: "contain", offsetX: 0, offsetY: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" }
+          ? { color: "#18222f", backgroundColor: "transparent", fontSize: 16, fontWeight: 400, textAlign: "left", lineHeight: 1.4, letterSpacing: 0, padding: 0, margin: 16, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, imagePosition: "center", objectFit: "contain", offsetX: 0, offsetY: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" }
           : type === "button"
-            ? { color: "#ffffff", backgroundColor: "#2563eb", fontSize: 16, fontWeight: 700, textAlign: "center", verticalAlign: "center", lineHeight: 1.4, padding: 12, margin: 12, width: 48, height: 48, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, buttonAlign: "center", shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" }
+            ? { color: "#ffffff", backgroundColor: "#2563eb", fontSize: 16, fontWeight: 700, textAlign: "center", verticalAlign: "center", lineHeight: 1.4, letterSpacing: 0, padding: 12, margin: 12, width: 48, height: 48, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, buttonAlign: "center", shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" }
           : structuredClone(initialModel.elements[0].style);
       let src = isImage ? node.getAttribute("src") || "" : undefined;
       if (isImage && src && !src.startsWith("data:")) {
@@ -1251,6 +1505,19 @@ document.querySelector("#page-menu-toggle").addEventListener("click", (event) =>
   event.currentTarget.setAttribute("aria-expanded", String(open));
 });
 pageBackground.addEventListener("input", (event) => { pushHistory(); model.page.backgroundColor = event.target.value; render(); });
+function updatePageLayout(key, value) {
+  beginStyleHistory();
+  model.page[key] = value;
+  const previewPage = frame.contentDocument?.querySelector(".page");
+  const previewHero = frame.contentDocument?.querySelector(".hero");
+  if (previewPage && previewHero) {
+    previewPage.style.padding = `${model.page.paddingY ?? 48}px ${model.page.paddingX ?? 24}px`;
+    previewHero.style.maxWidth = `${model.page.contentWidth ?? 760}px`;
+  } else render();
+}
+pageContentWidth.addEventListener("input", (event) => { pageContentWidthValue.value = `${event.target.value}px`; updatePageLayout("contentWidth", Number(event.target.value)); });
+pagePaddingX.addEventListener("input", (event) => { pagePaddingXValue.value = `${event.target.value}px`; updatePageLayout("paddingX", Number(event.target.value)); });
+pagePaddingY.addEventListener("input", (event) => { pagePaddingYValue.value = `${event.target.value}px`; updatePageLayout("paddingY", Number(event.target.value)); });
 document.querySelectorAll("[data-page-background]").forEach((button) => button.addEventListener("click", () => { pushHistory(); model.page.backgroundColor = button.dataset.pageBackground; render(); }));
 backgroundSize.addEventListener("change", (event) => { if (!model.selectedBackground) return; pushHistory(); model.page.backgroundSize = event.target.value; render(); });
 backgroundPosition.addEventListener("change", (event) => { if (!model.selectedBackground) return; pushHistory(); model.page.backgroundPosition = event.target.value; render(); });
@@ -1262,7 +1529,55 @@ backgroundFile.addEventListener("change", (event) => {
   reader.addEventListener("error", () => showToast("背景画像を読み込めませんでした"));
   reader.readAsDataURL(file);
 });
-layoutGap.addEventListener("input", (event) => { if (model.selectedGroupId) { const group = model.groups.find((candidate) => candidate.id === model.selectedGroupId); if (group) group.gap = Number(event.target.value); } else model.layoutGap = Number(event.target.value); render(); });
+layoutGap.addEventListener("input", (event) => {
+  beginStyleHistory();
+  const value = Number(event.target.value);
+  const group = model.selectedGroupId ? model.groups.find((candidate) => candidate.id === model.selectedGroupId) : null;
+  if (group) group.gap = value;
+  else model.layoutGap = value;
+  const previewLayout = frame.contentDocument?.querySelector(group ? `.nested-layout[data-group-id="${group.id}"]` : ".hero > .layout-split");
+  if (previewLayout) previewLayout.style.gap = `${value}px`;
+  else render();
+  layoutGapValue.value = `${value}px`;
+});
+function updateGroupStyle(key, value) {
+  if (!model.selectedGroupId) return;
+  const group = model.groups.find((candidate) => candidate.id === model.selectedGroupId);
+  if (!group) return;
+  beginStyleHistory();
+  group.style = newGroupStyle(group.style);
+  group.style[key] = value;
+  const previewGroup = frame.contentDocument?.querySelector(`.nested-layout[data-group-id="${group.id}"]`);
+  if (previewGroup) previewGroup.style.cssText = cssForGroup(group);
+  else render();
+}
+groupBackgroundColor.addEventListener("input", (event) => { groupBackgroundNone.checked = false; updateGroupStyle("background", { type: "solid", color: event.target.value, color2: event.target.value, angle: 135 }); updateGroupStyle("backgroundColor", event.target.value); });
+groupBackgroundNone.addEventListener("change", (event) => { if (event.target.checked) updateGroupStyle("background", { type: "solid", color: "transparent", color2: "transparent", angle: 135 }); updateGroupStyle("backgroundColor", event.target.checked ? "transparent" : groupBackgroundColor.value); });
+function updateGroupBackground() {
+  if (!model.selectedGroupId) return;
+  groupBackgroundNone.checked = false;
+  updateGroupStyle("background", { type: groupBackgroundGradient.value, color: groupBackgroundColor1.value, color2: groupBackgroundColor2.value, angle: Number(groupBackgroundAngle.value) });
+}
+groupBackgroundGradient.addEventListener("change", updateGroupBackground);
+groupBackgroundAngle.addEventListener("input", updateGroupBackground);
+groupBackgroundColor1.addEventListener("input", updateGroupBackground);
+groupBackgroundColor2.addEventListener("input", updateGroupBackground);
+document.querySelectorAll("[data-group-preset]").forEach((button) => button.addEventListener("click", () => {
+  const presets = {
+    card: { kind: "card", backgroundColor: "#ffffff", background: { type: "solid", color: "#ffffff", color2: "#ffffff", angle: 135 }, padding: 26, margin: 10, borderWidth: 1, borderColor: "#ead9ca", borderRadius: 18, shadow: "soft" },
+    panel: { kind: "panel", backgroundColor: "#f2e4d7", background: { type: "linear", color: "#f2e4d7", color2: "#fff9f2", angle: 135 }, padding: 38, margin: 16, borderWidth: 0, borderColor: "#d8c7ba", borderRadius: 24, shadow: "soft" },
+    flat: { kind: "normal", backgroundColor: "transparent", background: { type: "solid", color: "transparent", color2: "transparent", angle: 135 }, padding: 0, margin: 0, borderWidth: 0, borderColor: "#d8c7ba", borderRadius: 0, shadow: "none" },
+  };
+  const preset = presets[button.dataset.groupPreset];
+  if (!preset) return;
+  Object.entries(preset).forEach(([key, value]) => updateGroupStyle(key, value));
+}));
+groupPadding.addEventListener("input", (event) => { groupPaddingValue.value = `${event.target.value}px`; updateGroupStyle("padding", Number(event.target.value)); });
+groupMargin.addEventListener("input", (event) => { groupMarginValue.value = `${event.target.value}px`; updateGroupStyle("margin", Number(event.target.value)); });
+groupRadius.addEventListener("input", (event) => { groupRadiusValue.value = `${event.target.value}px`; updateGroupStyle("borderRadius", Number(event.target.value)); });
+groupBorderWidth.addEventListener("change", (event) => updateGroupStyle("borderWidth", Number(event.target.value)));
+groupBorderColor.addEventListener("input", (event) => updateGroupStyle("borderColor", event.target.value));
+groupShadow.addEventListener("change", (event) => updateGroupStyle("shadow", event.target.value));
 layoutWidth.addEventListener("input", (event) => { if (selectedLayoutConfig().direction === "row") updateSelectedLayoutRatio(event.target.value); });
 layoutHeight.addEventListener("input", (event) => { if (selectedLayoutConfig().direction === "column") updateSelectedLayoutRatio(event.target.value); });
 saveLayoutAnchor.addEventListener("click", () => {
@@ -1309,7 +1624,7 @@ function addRootRowBelow() {
   const directElements = model.elements.filter((element) => !element.groupId);
   const directGroups = model.groups.filter((group) => !group.parentGroupId);
   const rootColumn = "column-1";
-  const topGroup = { id: groupId, parentGroupId: null, parentColumn: rootColumn, direction: oldDirection, ratios: oldRatios, gap: model.layoutGap, columns: groupColumns, elementIds: directElements.map((element) => element.id) };
+  const topGroup = { id: groupId, parentGroupId: null, parentColumn: rootColumn, direction: oldDirection, ratios: oldRatios, gap: model.layoutGap, columns: groupColumns, elementIds: directElements.map((element) => element.id), style: newGroupStyle() };
   directElements.forEach((element) => {
     const index = Math.max(0, oldColumns.indexOf(element.column || oldColumns[0]));
     element.groupId = groupId;
@@ -1356,6 +1671,7 @@ function addLayoutArea(direction) {
         gap: model.layoutGap,
         columns: wrapperColumns,
         elementIds: [],
+        style: newGroupStyle(),
       };
       selectedGroup.parentGroupId = wrapperId;
       selectedGroup.parentColumn = wrapperColumns[0];
@@ -1375,7 +1691,7 @@ function addLayoutArea(direction) {
     const columns = [`${groupId}-column-1`, `${groupId}-column-2`];
     const childElements = model.elements.filter((element) => (element.groupId || null) === parentGroupId && element.column === parentColumn);
     const childGroups = model.groups.filter((group) => (group.parentGroupId || null) === parentGroupId && group.parentColumn === parentColumn);
-    model.groups.push({ id: groupId, parentGroupId, parentColumn, direction, ratios: [1, 1], gap: model.layoutGap, columns, elementIds: childElements.map((element) => element.id) });
+    model.groups.push({ id: groupId, parentGroupId, parentColumn, direction, ratios: [1, 1], gap: model.layoutGap, columns, elementIds: childElements.map((element) => element.id), style: newGroupStyle() });
     childElements.forEach((element) => { element.groupId = groupId; element.column = columns[0]; });
     childGroups.forEach((group) => { group.parentGroupId = groupId; group.parentColumn = columns[0]; });
     model.selectedIds = [];
@@ -1446,6 +1762,7 @@ function applyLayoutTemplate(template) {
       gap: model.layoutGap,
       columns,
       elementIds: childElements.map((element) => element.id),
+      style: newGroupStyle(),
     });
     childElements.forEach((element) => { element.groupId = groupId; element.column = columns[0]; });
     childGroups.forEach((group) => { group.parentGroupId = groupId; group.parentColumn = columns[0]; });
@@ -1479,7 +1796,7 @@ function applyLayoutTemplate(template) {
     const columns = config.ratios.map((_, index) => `${groupId}-column-${index + 1}`);
     const parentGroupId = model.selectedGroupId || null;
     const parentColumn = parentGroupId ? model.selectedColumn : model.elements.find((element) => element.id === selected[0])?.column || model.columns[0];
-    model.groups.push({ id: groupId, parentGroupId, parentColumn, direction: config.direction, ratios: config.ratios, gap: model.layoutGap, columns, elementIds: selected });
+    model.groups.push({ id: groupId, parentGroupId, parentColumn, direction: config.direction, ratios: config.ratios, gap: model.layoutGap, columns, elementIds: selected, style: newGroupStyle() });
     selected.forEach((id, index) => {
       const element = model.elements.find((candidate) => candidate.id === id);
       if (element) { element.groupId = groupId; element.column = columns[Math.min(index, columns.length - 1)]; }
@@ -1605,6 +1922,50 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => { actionToast.hidden = true; }, 4500);
 }
 
+function reorderSelectedElement(direction) {
+  if (model.selectedIds.length !== 1) return;
+  const element = selectedElement();
+  if (!element) return;
+  const group = element.groupId ? model.groups.find((candidate) => candidate.id === element.groupId) : null;
+  if (group) {
+    const index = group.elementIds.indexOf(element.id);
+    const next = index + direction;
+    if (index < 0 || next < 0 || next >= group.elementIds.length) return;
+    pushHistory();
+    [group.elementIds[index], group.elementIds[next]] = [group.elementIds[next], group.elementIds[index]];
+  } else {
+    const siblings = model.elements.filter((candidate) => !candidate.groupId && (candidate.column || "left") === (element.column || "left"));
+    const index = siblings.findIndex((candidate) => candidate.id === element.id);
+    const next = index + direction;
+    if (index < 0 || next < 0 || next >= siblings.length) return;
+    pushHistory();
+    const firstIndex = model.elements.indexOf(siblings[index]);
+    const secondIndex = model.elements.indexOf(siblings[next]);
+    [model.elements[firstIndex], model.elements[secondIndex]] = [model.elements[secondIndex], model.elements[firstIndex]];
+  }
+  render();
+}
+
+duplicateButton.addEventListener("click", () => {
+  if (model.selectedIds.length !== 1) return;
+  const source = selectedElement();
+  if (!source) return;
+  pushHistory();
+  const duplicate = structuredClone(source);
+  duplicate.id = `${source.type}-${Date.now()}-${model.elements.length + 1}`;
+  const sourceIndex = model.elements.indexOf(source);
+  model.elements.splice(sourceIndex + 1, 0, duplicate);
+  if (source.groupId) {
+    const group = model.groups.find((candidate) => candidate.id === source.groupId);
+    if (group) group.elementIds.splice(group.elementIds.indexOf(source.id) + 1, 0, duplicate.id);
+  }
+  model.selectedIds = [duplicate.id];
+  showToast("パーツを複製しました");
+  render();
+});
+moveUpButton.addEventListener("click", () => reorderSelectedElement(-1));
+moveDownButton.addEventListener("click", () => reorderSelectedElement(1));
+
 deleteButton.addEventListener("click", () => {
   const ids = model.selectedIds.filter((id) => model.elements.some((element) => element.id === id));
   if (!ids.length) return;
@@ -1643,6 +2004,7 @@ deleteLayoutButton.addEventListener("click", () => {
   showToast("レイアウトを削除しました");
 });
 document.querySelectorAll("[data-layout-template]").forEach((button) => button.addEventListener("click", () => applyLayoutTemplate(button.dataset.layoutTemplate)));
+document.querySelectorAll("[data-section-template]").forEach((button) => button.addEventListener("click", () => addSectionTemplate(button.dataset.sectionTemplate)));
 
 function insertionTarget() {
   const group = model.groups.find((candidate) => candidate.id === model.selectedGroupId);
@@ -1652,7 +2014,60 @@ function insertionTarget() {
   return { groupId: undefined, column: model.columns.includes(model.selectedColumn) ? model.selectedColumn : model.columns[0] };
 }
 
+function addSectionTemplate(template) {
+  const { groupId: parentGroupId, column: parentColumn } = insertionTarget();
+  const sectionId = `section-${Date.now()}`;
+  const definitions = {
+    hero: { direction: "column", ratios: [1], items: [
+      { type: "heading", column: 0, content: "ここにサービスの魅力を入力できます。" },
+      { type: "body", column: 0, content: "お客さまに伝えたいことを、わかりやすく紹介しましょう。" },
+      { type: "button", column: 0, content: "詳しく見る" },
+    ] },
+    features: { direction: "row", ratios: [1, 1, 1], items: [
+      { type: "heading", column: 0, content: "特徴 1" }, { type: "body", column: 0, content: "サービスの特徴を説明します。" },
+      { type: "heading", column: 1, content: "特徴 2" }, { type: "body", column: 1, content: "選ばれる理由を説明します。" },
+      { type: "heading", column: 2, content: "特徴 3" }, { type: "body", column: 2, content: "大切にしていることを説明します。" },
+    ] },
+    split: { direction: "row", ratios: [1, 1], items: [
+      { type: "heading", column: 0, content: "私たちについて" }, { type: "body", column: 0, content: "サービスやお店の紹介文を入力できます。" },
+      { type: "heading", column: 1, content: "お知らせ" }, { type: "body", column: 1, content: "最新情報やニュースを入力できます。" },
+    ] },
+    cta: { direction: "column", ratios: [1], items: [
+      { type: "heading", column: 0, content: "まずはお気軽にご相談ください。" },
+      { type: "body", column: 0, content: "お問い合わせやご予約はこちらから。" },
+      { type: "button", column: 0, content: "お問い合わせ" },
+    ] },
+  };
+  const definition = definitions[template] || definitions.hero;
+  const columns = definition.ratios.map((_, index) => `${sectionId}-column-${index + 1}`);
+  const headingStyle = { ...structuredClone(initialModel.elements[0].style), backgroundColor: "transparent", padding: 0, margin: 8, width: 100, borderRadius: 0 };
+  const bodyStyle = { color: "#334155", backgroundColor: "transparent", fontFamily: "system", fontSize: 18, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.8, letterSpacing: 0, padding: 0, margin: 8, width: 100, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
+  const buttonStyle = { color: "#ffffff", backgroundColor: "#2563eb", fontFamily: "system", fontSize: 16, fontWeight: 700, textAlign: "center", verticalAlign: "center", lineHeight: 1.4, letterSpacing: 0, padding: 12, margin: 8, width: 44, height: 48, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, buttonAlign: "center", shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" };
+  const elementIds = [];
+  pushHistory();
+  definition.items.forEach((item, index) => {
+    const id = `${sectionId}-${item.type}-${index + 1}`;
+    const element = item.type === "heading"
+      ? { id, type: "heading", column: columns[item.column], groupId: sectionId, content: item.content, style: structuredClone(headingStyle) }
+      : item.type === "body"
+        ? { id, type: "body", column: columns[item.column], groupId: sectionId, format: "plain", content: item.content, style: structuredClone(bodyStyle) }
+        : { id, type: "button", column: columns[item.column], groupId: sectionId, content: item.content, url: "", linkType: "url", anchorId: "", target: "same", style: structuredClone(buttonStyle) };
+    model.elements.push(element);
+    elementIds.push(id);
+  });
+  model.groups.push({ id: sectionId, parentGroupId: parentGroupId || null, parentColumn, direction: definition.direction, ratios: definition.ratios, gap: model.layoutGap, columns, elementIds, style: newGroupStyle() });
+  model.selectedStyle = false;
+  model.selectedBackground = false;
+  model.selectedIds = [];
+  model.selectedColumns = [];
+  model.selectedGroupId = sectionId;
+  model.selectedColumn = columns[0];
+  render();
+  showToast("セクションの見本を追加しました");
+}
+
 function addTextPart(type) {
+  pushHistory();
   const id = `${type}-${model.elements.length + 1}`;
   const bodyStyle = { color: "#334155", backgroundColor: "#ffffff", fontFamily: "system", fontSize: 18, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.8, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
   const { groupId, column } = insertionTarget();

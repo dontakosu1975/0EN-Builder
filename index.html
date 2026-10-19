@@ -77,14 +77,14 @@
             <p class="popover-note">選んだ場所に適用します。あとからさらに分けられます。</p>
           </div>
         </section>
+        <button id="select-background" class="part-card part-card-primary" type="button"><span class="part-icon">▨</span><span><strong>背景</strong><small>ページ全体の背景を決める</small></span><b>＋</b></button>
+        <button id="select-style" class="part-card part-card-primary" type="button"><span class="part-icon">✦</span><span><strong>見た目</strong><small>ページ全体の雰囲気を変える</small></span><b>＋</b></button>
         <button id="add-text" class="part-card part-card-primary" type="button"><span class="part-icon">T</span><span><strong>見出し</strong><small>大きな文字を追加</small></span><b>＋</b></button>
         <button id="add-body" class="part-card part-card-primary" type="button"><span class="part-icon">¶</span><span><strong>本文</strong><small>説明文を追加</small></span><b>＋</b></button>
         <label id="add-image" class="part-card part-card-primary" for="image-file"><span class="part-icon">▧</span><span><strong>画像</strong><small>写真やイラストを追加</small></span><b>＋</b></label>
         <input id="image-file" class="file-input-hidden" type="file" accept="image/*" aria-label="画像ファイルを選択" />
         <button id="add-separator" class="part-card part-card-primary" type="button"><span class="part-icon">━</span><span><strong>区切り線</strong><small>ページに線を追加</small></span><b>＋</b></button>
-        <button id="select-background" class="part-card part-card-primary" type="button"><span class="part-icon">▨</span><span><strong>背景</strong><small>ページ全体の背景を決める</small></span><b>＋</b></button>
         <button id="add-button" class="part-card part-card-primary" type="button"><span class="part-icon">▣</span><span><strong>ボタン</strong><small>行動を促すリンクを追加</small></span><b>＋</b></button>
-        <button id="select-style" class="part-card part-card-primary" type="button"><span class="part-icon">✦</span><span><strong>見た目</strong><small>ページ全体の雰囲気を変える</small></span><b>＋</b></button>
         <button id="reset-page" class="quiet-button" type="button">最初の状態に戻す</button>
       </aside>
 
@@ -94,7 +94,7 @@
             <p class="eyebrow">ライブプレビュー</p>
             <h2>ページ</h2>
           </div>
-          <span id="selection-status" class="status-pill">文章を選択中</span>
+          <div class="canvas-toolbar-actions"><div class="preview-viewport-switch" role="group" aria-label="プレビュー幅"><button type="button" data-preview-viewport="desktop" aria-pressed="true">PC表示</button><button type="button" data-preview-viewport="tablet" aria-pressed="false">タブレット</button><button type="button" data-preview-viewport="mobile" aria-pressed="false">スマホ表示</button></div><span id="selection-status" class="status-pill">文章を選択中</span></div>
         </div>
         <div class="preview-frame-wrap">
           <iframe id="preview-frame" title="作成中のページプレビュー" sandbox="allow-scripts"></iframe>
@@ -109,14 +109,19 @@
         </div>
 
         <section id="style-tools" class="customize-section style-tools" hidden aria-labelledby="style-tools-heading">
-          <div class="section-title-row"><h3 id="style-tools-heading">ページ全体の見た目</h3><span class="section-hint">5つの見本</span></div>
-          <p class="helper-text compact">色・文字・枠・ボタンをまとめて変えられます。文章や配置は変わりません。</p>
+          <div class="section-title-row"><h3 id="style-tools-heading">ページ全体の見た目</h3><span class="section-hint">8つの見本</span></div>
+          <p class="helper-text compact">ここを変えるとページ全体が変わります。文章や配置は変わりません。</p>
+          <div class="field-grid"><label class="field"><span class="range-label"><span>ページの横幅</span><output id="page-content-width-value"></output></span><span class="range-hint"><span>読みやすく</span><span>広く</span></span><input id="page-content-width" type="range" min="480" max="1400" step="10" aria-label="ページの最大幅" /></label><label class="field"><span class="range-label"><span>左右の余白</span><output id="page-padding-x-value"></output></span><input id="page-padding-x" type="range" min="0" max="96" step="1" aria-label="ページ左右の余白" /></label></div>
+          <label class="field"><span class="range-label"><span>上下の余白</span><output id="page-padding-y-value"></output></span><input id="page-padding-y" type="range" min="0" max="160" step="1" aria-label="ページ上下の余白" /></label>
           <div class="style-preset-grid" role="group" aria-label="ページ全体のスタイルプリセット">
             <button type="button" data-style-preset="casual"><span class="style-preset-sample style-sample-casual"><b>見出し</b><i></i><em>ボタン</em></span><strong>カジュアル</strong><small>親しみやすい</small></button>
             <button type="button" data-style-preset="pop"><span class="style-preset-sample style-sample-pop"><b>見出し</b><i></i><em>ボタン</em></span><strong>ポップ</strong><small>元気で明るい</small></button>
             <button type="button" data-style-preset="sweet"><span class="style-preset-sample style-sample-sweet"><b>見出し</b><i></i><em>ボタン</em></span><strong>スウィート</strong><small>やわらかく可愛い</small></button>
             <button type="button" data-style-preset="blog"><span class="style-preset-sample style-sample-blog"><b>見出し</b><i></i><em>ボタン</em></span><strong>ブログ</strong><small>読みやすく落ち着く</small></button>
             <button type="button" data-style-preset="business"><span class="style-preset-sample style-sample-business"><b>見出し</b><i></i><em>ボタン</em></span><strong>ビジネス</strong><small>整って信頼感</small></button>
+            <button type="button" data-style-preset="natural"><span class="style-preset-sample style-sample-natural"><b>見出し</b><i></i><em>ボタン</em></span><strong>ナチュラル</strong><small>温かく素材感</small></button>
+            <button type="button" data-style-preset="minimal"><span class="style-preset-sample style-sample-minimal"><b>見出し</b><i></i><em>ボタン</em></span><strong>ミニマル</strong><small>すっきり洗練</small></button>
+            <button type="button" data-style-preset="japanese"><span class="style-preset-sample style-sample-japanese"><b>見出し</b><i></i><em>ボタン</em></span><strong>和モダン</strong><small>静かで上品</small></button>
           </div>
           <p class="helper-text compact">気に入らなければ、別の見本を選んで戻せます。</p>
         </section>
@@ -137,6 +142,16 @@
             <button type="button" data-layout-template="add-horizontal"><span class="pattern-preview pattern-add-horizontal"><i></i><i></i></span><strong>横に追加</strong></button>
             <button type="button" data-layout-template="add-vertical"><span class="pattern-preview pattern-add-vertical"><i></i><i></i></span><strong>下に追加</strong></button>
           </div>
+          <div class="section-template-tool">
+            <div class="section-title-row"><strong>セクションの見本</strong><span class="section-hint">中身つきで追加</span></div>
+            <p class="helper-text compact">選択中の場所に追加します。追加後は「元に戻す」で戻せます。</p>
+            <div class="section-template-grid" role="group" aria-label="セクションの見本">
+              <button type="button" data-section-template="hero"><strong>ヒーロー</strong><small>見出し・説明・ボタン</small></button>
+              <button type="button" data-section-template="features"><strong>3つの特徴</strong><small>横並びカード</small></button>
+              <button type="button" data-section-template="split"><strong>紹介</strong><small>左右に内容を配置</small></button>
+              <button type="button" data-section-template="cta"><strong>案内・CTA</strong><small>行動を促すまとまり</small></button>
+            </div>
+          </div>
           <label id="layout-gap-field" class="field">
             <span class="range-label"><span>間隔</span><output id="layout-gap-value"></output></span>
             <span class="range-hint"><span>きゅっと</span><span>ゆったり</span></span>
@@ -153,6 +168,18 @@
             <input id="layout-height" type="range" min="20" max="80" step="1" aria-label="選択中のカラムの縦幅" />
           </label>
           <p id="layout-dimension-note" class="helper-text compact">カラムを選ぶと、使える方向の幅を調整できます。</p>
+          <div class="container-style-tool">
+            <div class="section-title-row"><strong>入れ物の見た目</strong><span class="section-hint">選択中のまとまり</span></div>
+            <div class="choice-grid group-preset-grid" role="group" aria-label="入れ物の見本"><button type="button" data-group-preset="card">カード</button><button type="button" data-group-preset="panel">パネル</button><button type="button" data-group-preset="flat">透明</button></div>
+            <div class="field-grid"><label class="field"><span>背景色</span><input id="group-background-color" type="color" aria-label="入れ物の背景色" /></label><label class="check-field"><input id="group-background-none" type="checkbox" aria-label="入れ物の背景なし" /><span>背景なし</span></label></div>
+            <div class="field-grid"><label class="field"><span>背景の種類</span><select id="group-background-gradient" aria-label="入れ物の背景の種類"><option value="solid">単色</option><option value="linear">線形</option><option value="radial">円形</option></select></label><label class="field"><span>向き</span><input id="group-background-angle" type="range" min="0" max="360" step="15" aria-label="入れ物の背景の向き" /></label></div>
+            <div class="field-grid"><label class="field"><span>色1</span><input id="group-background-color1" type="color" aria-label="入れ物の背景の色1" /></label><label class="field"><span>色2</span><input id="group-background-color2" type="color" aria-label="入れ物の背景の色2" /></label></div>
+            <label class="field"><span class="range-label"><span>内側の余白</span><output id="group-padding-value"></output></span><input id="group-padding" type="range" min="0" max="96" step="1" aria-label="入れ物の内側の余白" /></label>
+            <label class="field"><span class="range-label"><span>外側の余白</span><output id="group-margin-value"></output></span><input id="group-margin" type="range" min="0" max="96" step="1" aria-label="入れ物の外側の余白" /></label>
+            <label class="field"><span class="range-label"><span>角の丸み</span><output id="group-radius-value"></output></span><input id="group-radius" type="range" min="0" max="48" step="1" aria-label="入れ物の角の丸み" /></label>
+            <div class="field-grid"><label class="field"><span>枠線</span><select id="group-border-width" aria-label="入れ物の枠線"><option value="0">なし</option><option value="1">細い</option><option value="2">ふつう</option><option value="4">太い</option></select></label><label class="field"><span>枠線の色</span><input id="group-border-color" type="color" aria-label="入れ物の枠線の色" /></label></div>
+            <label class="field"><span>影</span><select id="group-shadow" aria-label="入れ物の影"><option value="none">なし</option><option value="soft">薄い</option><option value="strong">くっきり</option></select></label>
+          </div>
           <p class="helper-text compact">複数選択：Shiftを押しながらクリック</p>
           <div class="layout-remove-tool"><button id="delete-layout" class="secondary-button" type="button">このレイアウトを削除</button><small class="helper-text compact">中のパーツは残して、追加した入れ物だけ削除します。</small></div>
         </section>
@@ -194,6 +221,9 @@
           <label class="field field-wide"><span>ボタンの文字</span><input id="button-label" type="text" aria-label="ボタンの文字" /></label>
           <label class="field"><span>書体</span><select id="button-font-family" aria-label="ボタンの書体"><option value="system">標準ゴシック</option><option value="sans">Noto Sans JP</option><option value="serif">Noto Serif JP</option><option value="rounded">丸ゴシック</option></select></label>
           <label class="field"><span>文字の太さ</span><select id="button-font-weight" aria-label="ボタンの文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="600">太い（B）</option><option value="900">特太い（H）</option></select></label>
+          <label class="field"><span class="range-label"><span>文字の大きさ</span><output id="button-font-size-value"></output></span><input id="button-font-size" type="range" min="8" max="160" step="1" aria-label="ボタンの文字の大きさ" /></label>
+          <label class="field"><span class="range-label"><span>行間</span><output id="button-line-height-value"></output></span><input id="button-line-height" type="range" min="1" max="2.4" step="0.1" aria-label="ボタンの行間" /></label>
+          <label class="field"><span class="range-label"><span>文字間</span><output id="button-letter-spacing-value"></output></span><input id="button-letter-spacing" type="range" min="-0.08" max="0.2" step="0.01" aria-label="ボタンの文字間" /></label>
           <fieldset class="field-set">
             <legend>リンク先</legend>
             <select id="button-link-type" aria-label="リンク先の種類"><option value="url">外部URL</option><option value="anchor">このページの場所</option></select>
@@ -226,11 +256,21 @@
           <input id="background-none" type="checkbox" aria-label="パーツの背景なし" />
           <span>パーツの背景なし</span>
         </label>
+        <div class="gradient-tool">
+          <div class="section-title-row"><strong>背景のグラデーション</strong><span class="section-hint">色をなじませる</span></div>
+          <div class="field-grid"><label class="field"><span>種類</span><select id="background-gradient" aria-label="背景グラデーション"><option value="solid">単色</option><option value="linear">線形</option><option value="radial">円形</option></select></label><label class="field"><span>向き</span><input id="background-gradient-angle" type="range" min="0" max="360" step="15" aria-label="グラデーションの向き" /></label></div>
+          <div class="field-grid"><label class="field"><span>色1</span><input id="background-gradient-color1" type="color" aria-label="グラデーションの色1" /></label><label class="field"><span>色2</span><input id="background-gradient-color2" type="color" aria-label="グラデーションの色2" /></label></div>
+        </div>
 
         <label class="field">
           <span class="range-label"><span>文字の大きさ</span><output id="font-size-value"></output></span><span class="range-hint"><span>小さめ</span><span>大きめ</span></span>
-          <input id="font-size" type="range" min="16" max="72" step="1" aria-label="文字の大きさ" />
+          <input id="font-size" type="range" min="8" max="160" step="1" aria-label="文字の大きさ" />
         </label>
+        <label class="field"><span>文字サイズの変化</span><select id="font-size-mode" aria-label="文字サイズの変化"><option value="fixed">固定サイズ</option><option value="responsive">画面に合わせて調整</option></select></label>
+        <div id="responsive-font-size-tools" class="responsive-font-size-tools" hidden>
+          <p class="helper-text compact">画面が狭いと小さく、広いと大きくなります。</p>
+          <div class="field-grid"><label class="field"><span class="range-label"><span>小さい画面</span><output id="font-size-min-value"></output></span><input id="font-size-min" type="range" min="8" max="96" step="1" aria-label="小さい画面の文字サイズ" /></label><label class="field"><span class="range-label"><span>大きい画面</span><output id="font-size-max-value"></output></span><input id="font-size-max" type="range" min="16" max="180" step="1" aria-label="大きい画面の文字サイズ" /></label></div>
+        </div>
 
         <label class="field"><span>文字の太さ</span><select id="font-weight" aria-label="文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="600">太い（B）</option><option value="900">特太い（H）</option></select></label>
 
@@ -258,6 +298,11 @@
         </label>
 
         <label class="field">
+          <span class="range-label"><span>文字間</span><output id="letter-spacing-value"></output></span><span class="range-hint"><span>つめる</span><span>ひろげる</span></span>
+          <input id="letter-spacing" type="range" min="-0.08" max="0.2" step="0.01" aria-label="文字間" />
+        </label>
+
+        <label class="field">
           <span class="range-label"><span>内側の余白</span><output id="padding-value"></output></span><span class="range-hint"><span>きゅっと</span><span>ゆったり</span></span>
           <input id="padding" type="range" min="0" max="64" step="1" aria-label="内側の余白" />
         </label>
@@ -267,10 +312,32 @@
           <input id="margin" type="range" min="0" max="64" step="1" aria-label="外側の余白" />
         </label>
 
+        <button type="button" class="spacing-detail-toggle" data-spacing-detail aria-expanded="false" aria-controls="spacing-detail-panel">余白を4方向で調整</button>
+        <div id="spacing-detail-panel" class="spacing-detail-panel" hidden>
+          <p class="helper-text compact">上下左右を別々に調整できます。</p>
+          <div class="spacing-detail-grid">
+            <label class="field"><span class="range-label"><span>内側・上</span><output id="padding-top-value"></output></span><input id="padding-top" type="range" min="0" max="80" step="1" aria-label="内側の上余白" /></label>
+            <label class="field"><span class="range-label"><span>内側・右</span><output id="padding-right-value"></output></span><input id="padding-right" type="range" min="0" max="80" step="1" aria-label="内側の右余白" /></label>
+            <label class="field"><span class="range-label"><span>内側・下</span><output id="padding-bottom-value"></output></span><input id="padding-bottom" type="range" min="0" max="80" step="1" aria-label="内側の下余白" /></label>
+            <label class="field"><span class="range-label"><span>内側・左</span><output id="padding-left-value"></output></span><input id="padding-left" type="range" min="0" max="80" step="1" aria-label="内側の左余白" /></label>
+            <label class="field"><span class="range-label"><span>外側・上</span><output id="margin-top-value"></output></span><input id="margin-top" type="range" min="0" max="80" step="1" aria-label="外側の上余白" /></label>
+            <label class="field"><span class="range-label"><span>外側・右</span><output id="margin-right-value"></output></span><input id="margin-right" type="range" min="0" max="80" step="1" aria-label="外側の右余白" /></label>
+            <label class="field"><span class="range-label"><span>外側・下</span><output id="margin-bottom-value"></output></span><input id="margin-bottom" type="range" min="0" max="80" step="1" aria-label="外側の下余白" /></label>
+            <label class="field"><span class="range-label"><span>外側・左</span><output id="margin-left-value"></output></span><input id="margin-left" type="range" min="0" max="80" step="1" aria-label="外側の左余白" /></label>
+          </div>
+        </div>
+
         <label class="field">
           <span class="range-label"><span>幅</span><output id="width-value"></output></span>
           <input id="width" type="range" min="40" max="100" step="1" aria-label="幅" />
         </label>
+
+        <div class="text-position-tool">
+          <div class="section-title-row"><strong>文字の位置</strong><span class="section-hint">文字だけ動かす</span></div>
+          <p class="helper-text compact">周りの並びは変えず、文字だけを少し動かします。</p>
+          <label class="field"><span class="range-label"><span>左右</span><output id="text-offset-x-value"></output></span><span class="range-hint"><span>左</span><span>右</span></span><input id="text-offset-x" type="range" min="-80" max="80" step="1" aria-label="文字の左右位置" /></label>
+          <label class="field"><span class="range-label"><span>上下</span><output id="text-offset-y-value"></output></span><span class="range-hint"><span>上</span><span>下</span></span><input id="text-offset-y" type="range" min="-80" max="80" step="1" aria-label="文字の上下位置" /></label>
+        </div>
 
         <div class="field-grid">
           <label class="field">
@@ -364,6 +431,7 @@
         </section>
 
         <section id="delete-section" class="delete-section" hidden aria-label="パーツの操作">
+          <div class="part-order-actions"><button id="duplicate-selected" class="secondary-button" type="button">複製</button><button id="move-selected-up" class="secondary-button" type="button">↑ 上へ</button><button id="move-selected-down" class="secondary-button" type="button">↓ 下へ</button></div>
           <button id="delete-selected" class="delete-button" type="button">🗑 このパーツを削除</button>
         </section>
 
