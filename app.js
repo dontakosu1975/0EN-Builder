@@ -533,12 +533,18 @@ function cssFor(element) {
   const transparentTextPadding = ["heading", "body"].includes(element.type) && effectiveBackgroundColor === "transparent" && !hasCustomPadding;
   const effectivePadding = transparentTextPadding ? "0px" : `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`;
   const effectiveMargin = `${marginTop}px ${marginRight}px ${marginBottom}px ${marginLeft}px`;
+  const blockAlign = ["heading", "body"].includes(element.type) ? (s.blockAlign || "left") : "left";
+  const blockMargin = blockAlign === "center"
+    ? `${marginTop}px auto ${marginBottom}px auto`
+    : blockAlign === "right"
+      ? `${marginTop}px ${marginRight}px ${marginBottom}px auto`
+      : `${marginTop}px auto ${marginBottom}px ${marginLeft}px`;
   const hasCustomMargin = ["marginTop", "marginRight", "marginBottom", "marginLeft"].some((key) => Number.isFinite(Number(s[key])));
   const imageMargin = element.type === "image"
     ? hasCustomMargin ? effectiveMargin : { left: `${marginTop}px auto ${marginBottom}px 0`, center: `${marginTop}px auto ${marginBottom}px auto`, right: `${marginTop}px 0 ${marginBottom}px auto` }[s.imagePosition || "center"]
     : element.type === "button"
       ? hasCustomMargin ? effectiveMargin : `${marginTop}px ${s.buttonAlign === "right" ? "0" : s.buttonAlign === "left" ? "auto" : "auto"} ${marginBottom}px ${s.buttonAlign === "left" ? "0" : s.buttonAlign === "right" ? "auto" : "auto"}`
-      : effectiveMargin;
+      : ["heading", "body"].includes(element.type) ? blockMargin : effectiveMargin;
   const border = s.borderStyle === "double" ? `${Math.max(3, s.borderWidth)}px double ${s.borderColor}` : `${s.borderWidth}px solid ${s.borderColor}`;
   const shadows = [
     { none: "none", soft: `${Number(s.shadowOffsetX || 0)}px ${8 + Number(s.shadowOffsetY || 0)}px 20px rgba(30,52,79,.14)`, strong: `${Number(s.shadowOffsetX || 0)}px ${12 + Number(s.shadowOffsetY || 0)}px 28px rgba(30,52,79,.28)` }[s.shadow],
@@ -914,6 +920,8 @@ function syncControls() {
   document.querySelectorAll("[data-preset]").forEach((button) => button.classList.toggle("is-applied", button.dataset.preset === model.activePreset));
   document.querySelectorAll("[data-style-preset]").forEach((button) => button.classList.toggle("is-applied", button.dataset.stylePreset === model.activeStylePreset));
   document.querySelectorAll("[data-align]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.align === s.textAlign)));
+  document.querySelector("[data-block-position-tools]").hidden = !["heading", "body"].includes(element.type);
+  document.querySelectorAll("[data-block-align]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.blockAlign === (s.blockAlign || "left"))));
   document.querySelectorAll("[data-valign]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.valign === (s.verticalAlign || "top"))));
   imageAlt.value = element.type === "image" ? element.alt : "";
   imageWidth.value = element.type === "image" ? element.style.width : 100;
@@ -1295,6 +1303,7 @@ buttonBorderWidth.addEventListener("change", (event) => updateButtonStyle("borde
 buttonBorderColor.addEventListener("input", (event) => updateButtonStyle("borderColor", event.target.value));
 document.querySelectorAll("[data-button-align]").forEach((button) => button.addEventListener("click", () => updateButtonStyle("buttonAlign", button.dataset.buttonAlign)));
 document.querySelectorAll("[data-align]").forEach((button) => button.addEventListener("click", () => updateStyle("textAlign", button.dataset.align)));
+document.querySelectorAll("[data-block-align]").forEach((button) => button.addEventListener("click", () => updateStyle("blockAlign", button.dataset.blockAlign)));
 document.querySelectorAll("[data-valign]").forEach((button) => button.addEventListener("click", () => updateStyle("verticalAlign", button.dataset.valign)));
 imageAlt.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { pushHistory(); selectedElement().alt = event.target.value; render(); } });
 imageWidth.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("width", Number(event.target.value)); } });
