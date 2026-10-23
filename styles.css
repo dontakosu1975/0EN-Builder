@@ -206,6 +206,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .alignment-icon-center i { align-self: center; }
 .alignment-icon-right i { align-self: flex-end; }
 .alignment-icon-justify i { width: 21px !important; align-self: stretch; }
+.layer-toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.layer-toolbar .secondary-button { min-width: 0; padding: 7px 4px; font-size: .68rem; }
 .decoration-list { display: flex; flex-direction: column; gap: 10px; }
 .decoration-row { display: flex; flex-direction: column; gap: 6px; }
 .decoration-row-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

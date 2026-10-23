@@ -174,6 +174,7 @@ const textOffsetX = document.querySelector("#text-offset-x");
 const textOffsetXValue = document.querySelector("#text-offset-x-value");
 const textOffsetY = document.querySelector("#text-offset-y");
 const textOffsetYValue = document.querySelector("#text-offset-y-value");
+const layerOrderValue = document.querySelector("#layer-order-value");
 const textStrokeColor = document.querySelector("#text-stroke-color");
 const shadowOffsetX = document.querySelector("#shadow-offset-x");
 const shadowOffsetXValue = document.querySelector("#shadow-offset-x-value");
@@ -576,6 +577,8 @@ function cssFor(element) {
     `padding: ${effectivePadding};`,
     `margin: ${imageMargin};`,
     `width: ${s.width}%;`,
+    Number.isFinite(Number(s.zIndex)) && Number(s.zIndex) !== 0 ? "position: relative;" : "",
+    Number.isFinite(Number(s.zIndex)) && Number(s.zIndex) !== 0 ? `z-index: ${Number(s.zIndex)};` : "",
     element.type === "button" ? `min-height: ${s.height || 48}px;` : "",
     `border: ${border};`,
     `border-radius: ${s.borderRadius}px;`,
@@ -946,6 +949,8 @@ function syncControls() {
   textOffsetXValue.value = textMovable ? `${element.style.offsetX || 0}px` : "";
   textOffsetY.value = textMovable ? (element.style.offsetY || 0) : 0;
   textOffsetYValue.value = textMovable ? `${element.style.offsetY || 0}px` : "";
+  const zIndex = Number(element.style.zIndex || 0);
+  layerOrderValue.textContent = zIndex === 0 ? "標準" : `重なり順 ${zIndex > 0 ? "+" : ""}${zIndex}`;
   document.querySelectorAll("[data-image-position]").forEach((button) => button.setAttribute("aria-pressed", String(element.type === "image" && (element.style.imagePosition || "center") === button.dataset.imagePosition)));
   const isButton = element.type === "button";
   buttonLabel.value = isButton ? element.content : "";
@@ -1319,6 +1324,20 @@ imageOffsetX.addEventListener("input", (event) => { if (hasSelection() && select
 imageOffsetY.addEventListener("input", (event) => { if (hasSelection() && selectedElement().type === "image") { updateStyle("offsetY", Number(event.target.value)); } });
 textOffsetX.addEventListener("input", (event) => { if (hasSelection() && ["heading", "body", "button"].includes(selectedElement().type)) { textOffsetXValue.value = `${event.target.value}px`; updateStyle("offsetX", Number(event.target.value)); } });
 textOffsetY.addEventListener("input", (event) => { if (hasSelection() && ["heading", "body", "button"].includes(selectedElement().type)) { textOffsetYValue.value = `${event.target.value}px`; updateStyle("offsetY", Number(event.target.value)); } });
+function updateLayerOrder(action) {
+  if (!hasSelection()) return;
+  const element = selectedElement();
+  const siblings = model.elements.filter((candidate) => candidate.id !== element.id && candidate.groupId === element.groupId && candidate.column === element.column);
+  const siblingIndexes = siblings.map((candidate) => Number(candidate.style?.zIndex || 0));
+  const current = Number(element.style.zIndex || 0);
+  const max = siblingIndexes.length ? Math.max(...siblingIndexes) : 0;
+  const min = siblingIndexes.length ? Math.min(...siblingIndexes) : 0;
+  const next = action === "front" ? max + 1 : action === "back" ? min - 1 : action === "forward" ? current + 1 : current - 1;
+  beginStyleHistory();
+  element.style.zIndex = next;
+  if (!patchPreviewElement(element)) render();
+}
+document.querySelectorAll("[data-layer-action]").forEach((button) => button.addEventListener("click", () => updateLayerOrder(button.dataset.layerAction)));
 document.querySelectorAll("[data-image-position]").forEach((button) => button.addEventListener("click", () => {
   if (!hasSelection() || selectedElement().type !== "image") return;
   pushHistory();
