@@ -391,7 +391,9 @@ body {
 .app-header .header-note {
   max-width: none;
   color: #173e67;
+  margin-right: 4px;
   white-space: nowrap;
+  text-align: left;
   text-shadow: none;
 }
 .header-actions { gap: 10px; }
@@ -418,6 +420,14 @@ body {
   box-shadow: 0 7px 16px rgba(4, 49, 105, .24), inset 0 1px 0 rgba(255,255,255,.4);
 }
 .page-menu-button-primary:hover { background: linear-gradient(180deg, #eef9ff 0%, #91c9f5 12%, #2b88f2 52%, #0b61c3 100%); }
+.app-header .page-menu-button.page-menu-icon {
+  width: 42px;
+  min-height: 42px;
+  padding: 0;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
 
 .page-settings {
   top: var(--app-header-height);
