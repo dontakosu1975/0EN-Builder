@@ -320,7 +320,7 @@ body {
   grid-template-rows: auto auto;
   padding: 12px 18px;
   border-bottom: 1px solid rgba(190, 224, 255, .72);
-  background: linear-gradient(180deg, #5ca4d6 0%, #347fbe 48%, #1c5d99 100%);
+  background: linear-gradient(90deg, #2c73b2 0%, #5fa7d6 52%, #dff2ff 100%);
   box-shadow: 0 8px 24px rgba(14, 78, 140, .16), inset 0 1px 0 rgba(255,255,255,.52);
   overflow: hidden;
   backdrop-filter: none;
@@ -352,8 +352,10 @@ body {
   justify-content: space-between;
   gap: 14px;
   min-width: 0;
-  padding-top: 8px;
+  margin: 0 -18px -12px;
+  padding: 8px 18px 10px;
   border-top: 1px solid rgba(255,255,255,.2);
+  background: linear-gradient(160deg, #d7efff 0%, #78add4 47%, #28588f 100%);
 }
 .aero-ribbon-tabs,
 .aero-ribbon-status { display: flex; align-items: center; gap: 6px; }
@@ -386,11 +388,19 @@ body {
 .app-header .header-note { color: #fff; }
 .app-header .eyebrow { opacity: .78; }
 .header-note { max-width: 280px; opacity: .82; }
+.app-header .header-note {
+  max-width: none;
+  color: #173e67;
+  white-space: nowrap;
+  text-shadow: none;
+}
 .header-actions { gap: 10px; }
-.header-file-actions { gap: 6px; }
+.header-file-actions { gap: 8px; }
 .page-menu-button {
   border-color: rgba(255,255,255,.4);
-  border-radius: 10px;
+  min-height: 38px;
+  padding: 10px 16px;
+  border-radius: 12px;
   background: linear-gradient(180deg, #f7fbff 0%, #aebed9 11%, #526c9f 48%, #123875 100%);
   color: #fff;
   text-shadow: 0 1px 1px rgba(8, 30, 72, .72);
@@ -536,6 +546,7 @@ select,
   }
   .aero-ribbon { width: 100%; }
   .aero-ribbon-status { display: none; }
+  .app-header .header-note { white-space: normal; }
   .builder-shell { padding: 10px; }
   .left-panel,
   .right-panel { padding: 14px 12px 48px; }
