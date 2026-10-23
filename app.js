@@ -568,7 +568,7 @@ function cssFor(element) {
     `font-size: ${fontSizeCss(s, element.type === "heading" ? 42 : 16)};`,
     `font-weight: ${s.fontWeight};`,
     `text-shadow: ${combinedTextShadow};`,
-    `text-align: ${s.textAlign};`,
+    `text-align: ${["left", "center", "right", "justify"].includes(s.textAlign) ? s.textAlign : "left"};`,
     ["heading", "body"].includes(element.type) ? "display: flex; flex-direction: column;" : "",
     ["heading", "body"].includes(element.type) ? `justify-content: ${{ top: "flex-start", center: "center", bottom: "flex-end" }[s.verticalAlign || "top"]};` : "",
     `line-height: ${s.lineHeight};`,

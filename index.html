@@ -280,22 +280,23 @@
 
         <label class="field"><span>文字の太さ</span><select id="font-weight" aria-label="文字の太さ"><option value="300">細い（L）</option><option value="400">標準（M）</option><option value="500">やや太い</option><option value="600">太い（B）</option><option value="900">特太い（H）</option></select></label>
 
-        <fieldset class="field-set">
+        <fieldset class="field-set alignment-field-set">
           <legend>文字の揃え方</legend>
-          <div class="segmented" role="group" aria-label="文字の揃え方">
-            <button type="button" data-align="left">左揃え</button>
-            <button type="button" data-align="center">中央揃え</button>
-            <button type="button" data-align="right">右揃え</button>
+          <div class="alignment-toolbar" role="toolbar" aria-label="文字の揃え方">
+            <button type="button" class="alignment-button" data-align="left" aria-label="左揃え" title="左揃え"><span class="alignment-icon alignment-icon-left" aria-hidden="true"></span></button>
+            <button type="button" class="alignment-button" data-align="center" aria-label="中央揃え" title="中央揃え"><span class="alignment-icon alignment-icon-center" aria-hidden="true"></span></button>
+            <button type="button" class="alignment-button" data-align="right" aria-label="右揃え" title="右揃え"><span class="alignment-icon alignment-icon-right" aria-hidden="true"></span></button>
+            <button type="button" class="alignment-button" data-align="justify" aria-label="両端揃え" title="両端揃え"><span class="alignment-icon alignment-icon-justify" aria-hidden="true"></span></button>
           </div>
         </fieldset>
 
-        <fieldset class="field-set" data-block-position-tools>
+        <fieldset class="field-set alignment-field-set" data-block-position-tools>
           <legend>ブロックの位置</legend>
           <p class="helper-text compact">文字ではなく、見出しの枠そのものを段の中で動かします。</p>
-          <div class="segmented" role="group" aria-label="ブロックの位置">
-            <button type="button" data-block-align="left">左</button>
-            <button type="button" data-block-align="center">中央</button>
-            <button type="button" data-block-align="right">右</button>
+          <div class="alignment-toolbar" role="toolbar" aria-label="ブロックの位置">
+            <button type="button" class="alignment-button" data-block-align="left" aria-label="ブロックを左に配置" title="ブロックを左に配置"><span class="alignment-icon alignment-icon-left" aria-hidden="true"></span></button>
+            <button type="button" class="alignment-button" data-block-align="center" aria-label="ブロックを中央に配置" title="ブロックを中央に配置"><span class="alignment-icon alignment-icon-center" aria-hidden="true"></span></button>
+            <button type="button" class="alignment-button" data-block-align="right" aria-label="ブロックを右に配置" title="ブロックを右に配置"><span class="alignment-icon alignment-icon-right" aria-hidden="true"></span></button>
           </div>
         </fieldset>
 
