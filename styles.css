@@ -290,3 +290,182 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   .builder-footer { gap: 9px; overflow-x: auto; white-space: nowrap; }
   .footer-spacer { display: none; }
 }
+
+/* Aero ribbon workspace: the editor chrome gets a modern Vista-inspired glass finish.
+   The generated page preview remains intentionally white and independent. */
+:root {
+  --ink: #102b4d;
+  --muted: #5d7391;
+  --line: rgba(144, 180, 218, .58);
+  --surface: rgba(255, 255, 255, .82);
+  --soft: rgba(233, 244, 255, .78);
+  --accent: #1675e8;
+  --accent-soft: rgba(216, 237, 255, .92);
+  --shadow: 0 18px 46px rgba(35, 92, 150, .16);
+  --app-header-height: 96px;
+}
+
+body {
+  background: #e9f4ff;
+  background-image: linear-gradient(135deg, rgba(255,255,255,.82), rgba(222,239,255,.78) 45%, rgba(244,235,255,.68));
+}
+
+.app-header {
+  height: var(--app-header-height);
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(190, 224, 255, .72);
+  background: rgba(15, 94, 171, .92);
+  box-shadow: 0 8px 24px rgba(14, 78, 140, .24), inset 0 1px 0 rgba(255,255,255,.42);
+  backdrop-filter: blur(18px);
+}
+
+.app-header h1,
+.app-header .eyebrow,
+.app-header .header-note { color: #fff; }
+.app-header .eyebrow { opacity: .78; }
+.header-note { max-width: 280px; opacity: .82; }
+.header-actions { gap: 10px; }
+.header-file-actions { gap: 6px; }
+.page-menu-button {
+  border-color: rgba(255,255,255,.4);
+  border-radius: 10px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3);
+}
+.page-menu-button:hover,
+.page-menu-button[aria-expanded="true"] {
+  border-color: rgba(255,255,255,.72);
+  background: rgba(255,255,255,.24);
+  color: #fff;
+}
+.page-menu-button-primary {
+  border-color: rgba(255,255,255,.56);
+  background: #1675e8;
+  box-shadow: 0 7px 16px rgba(4, 49, 105, .24), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.page-menu-button-primary:hover { background: #2b88f2; }
+
+.page-settings {
+  top: var(--app-header-height);
+  border-bottom-color: rgba(147, 197, 241, .68);
+  background: rgba(35, 123, 207, .94);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(14, 78, 140, .2);
+  backdrop-filter: blur(16px);
+}
+.page-settings .eyebrow,
+.page-settings h2,
+.page-settings .page-setting-note { color: #fff; }
+.page-settings .eyebrow { opacity: .78; }
+
+.builder-shell {
+  grid-template-columns: 204px minmax(420px, 1fr) 320px;
+  gap: 14px;
+  min-height: calc(100vh - var(--app-header-height));
+  padding: 14px;
+}
+.panel,
+.canvas-column {
+  border-color: rgba(159, 195, 229, .72);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.74);
+  backdrop-filter: blur(18px);
+}
+.left-panel {
+  padding: 16px 12px 56px;
+  background: rgba(29, 113, 194, .9);
+  border-color: rgba(190, 226, 255, .66);
+  box-shadow: 0 18px 42px rgba(24, 92, 151, .22), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.left-panel .eyebrow,
+.left-panel .section-title-row h3,
+.left-panel .section-hint { color: #fff; }
+.left-panel .section-hint { opacity: .72; }
+.left-panel .part-card,
+.left-panel .layout-card {
+  border-color: rgba(255,255,255,.42);
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
+}
+.left-panel .part-card small,
+.left-panel .layout-card small { color: rgba(255,255,255,.76); }
+.left-panel .part-card b,
+.left-panel .layout-card b { color: #fff; }
+.left-panel .part-icon { background: rgba(255,255,255,.2); color: #fff; }
+.left-panel .part-card:hover,
+.left-panel .layout-card:hover,
+.left-panel .layout-card[aria-expanded="true"] {
+  border-color: rgba(255,255,255,.78);
+  background: rgba(255,255,255,.24);
+  transform: translateY(-1px);
+}
+.left-panel .layout-popover { border-color: rgba(151,194,235,.7); background: rgba(245,251,255,.96); }
+.left-panel .quiet-button { border-color: rgba(255,255,255,.36); background: rgba(255,255,255,.1); color: rgba(255,255,255,.78); }
+
+.canvas-column { overflow: hidden; }
+.canvas-toolbar {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(159, 195, 229, .5);
+  background: rgba(248, 252, 255, .78);
+}
+.canvas-toolbar .eyebrow { color: #347fca; }
+.preview-viewport-switch { border-color: rgba(143,183,223,.65); background: rgba(231,243,255,.86); }
+.preview-viewport-switch button[aria-pressed="true"] { background: #1675e8; box-shadow: 0 4px 10px rgba(22,117,232,.24); }
+.status-pill { background: #dff1ff; color: #075a9f; }
+.preview-frame-wrap { background: #dfeefe; border-color: rgba(159,195,229,.5); }
+#preview-frame { border-radius: 12px; box-shadow: 0 10px 28px rgba(37,83,127,.14); }
+
+.right-panel {
+  padding: 16px 14px 56px;
+  gap: 12px;
+}
+.right-panel .panel-heading { padding: 0 4px; }
+.right-panel .eyebrow { color: #347fca; }
+.customize-section { border-top-color: rgba(142,182,222,.54); }
+.customize-section:first-of-type { border-top: 0; }
+.field input[type="color"],
+textarea,
+select,
+.anchor-tool,
+.layout-tools,
+.spacing-detail-panel,
+.gradient-tool,
+.responsive-font-size-tools {
+  border-color: rgba(153, 190, 224, .7);
+  background: rgba(248, 252, 255, .78);
+}
+.choice-grid button,
+.segmented,
+.spacing-detail-toggle,
+.layout-actions button,
+.section-template-grid button {
+  border-color: rgba(153, 190, 224, .62);
+  background: rgba(232, 244, 255, .72);
+}
+.choice-grid button:hover,
+.choice-grid button[aria-pressed="true"],
+.segmented button[aria-pressed="true"],
+.spacing-detail-toggle[aria-expanded="true"],
+.section-template-grid button:hover,
+.section-template-grid button:focus-visible {
+  border-color: #4b9af0;
+  background: #dff0ff;
+  color: #0d5ca2;
+}
+.builder-footer {
+  border-top-color: rgba(158, 195, 228, .72);
+  background: rgba(239, 248, 255, .9);
+  box-shadow: 0 -6px 20px rgba(37, 83, 127, .12);
+  backdrop-filter: blur(16px);
+}
+.footer-status i { background: #2588e8; box-shadow: 0 0 8px rgba(37,136,232,.5); }
+
+@media (max-width: 720px) {
+  .app-header { height: auto; background: rgba(15, 94, 171, .96); }
+  .builder-shell { padding: 10px; }
+  .left-panel,
+  .right-panel { padding: 14px 12px 48px; }
+}
