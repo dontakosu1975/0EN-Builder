@@ -138,6 +138,7 @@ let contextTarget = null;
 const imageAlt = document.querySelector("#image-alt");
 const imageWidth = document.querySelector("#image-width");
 const imageWidthValue = document.querySelector("#image-width-value");
+const imageAllowOverflow = document.querySelector("#image-allow-overflow");
 const imageMargin = document.querySelector("#image-margin");
 const imageMarginValue = document.querySelector("#image-margin-value");
 const imageRadius = document.querySelector("#image-radius");
@@ -430,6 +431,7 @@ function setColumnAnchor(action) {
 
 const controls = {
   content: document.querySelector("#content-input"),
+  allowOverflow: document.querySelector("#allow-overflow"),
   textColor: document.querySelector("#text-color"),
   backgroundColor: document.querySelector("#background-color"),
   backgroundNone: document.querySelector("#background-none"),
@@ -577,6 +579,7 @@ function cssFor(element) {
     `padding: ${effectivePadding};`,
     `margin: ${imageMargin};`,
     `width: ${s.width}%;`,
+    `max-width: ${s.allowOverflow ? "none" : "100%"};`,
     Number.isFinite(Number(s.zIndex)) && Number(s.zIndex) !== 0 ? "position: relative;" : "",
     Number.isFinite(Number(s.zIndex)) && Number(s.zIndex) !== 0 ? `z-index: ${Number(s.zIndex)};` : "",
     element.type === "button" ? `min-height: ${s.height || 48}px;` : "",
@@ -754,7 +757,7 @@ function formatCssForSource(css) {
 }
 
 function generatedCss({ source = false } = {}) {
-  const elementCss = `.text-element { max-width: none; }\n${model.elements.map((element) => `#${element.id} { ${cssFor(element)} }`).join("\n")}`;
+  const elementCss = `.text-element { max-width: 100%; }\n${model.elements.map((element) => `#${element.id} { ${cssFor(element)} }`).join("\n")}`;
   const layoutRule = layoutDeclaration(model.layoutDirection, model.layoutRatios, model.layoutGap);
   const columnFlex = model.layoutDirection === "column" ? ".layout-column { flex: 0 0 auto; }" : "";
   const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"] { ${layoutDeclaration(group.direction, group.ratios, group.gap)} ${cssForGroup(group)} }`).join("\n");
@@ -763,7 +766,7 @@ function generatedCss({ source = false } = {}) {
 }
 
 function previewDocument() {
-  const elementCss = `.text-element{max-width:none}${model.elements.map((element) => `#${element.id}{${cssFor(element)}}`).join("")}`;
+  const elementCss = `.text-element{max-width:100%}${model.elements.map((element) => `#${element.id}{${cssFor(element)}}`).join("")}`;
   const layoutRule = layoutDeclaration(model.layoutDirection, model.layoutRatios, model.layoutGap);
   const columnFlex = model.layoutDirection === "column" ? ".layout-column{flex:0 0 auto}" : "";
   const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"]{${layoutDeclaration(group.direction, group.ratios, group.gap)}${cssForGroup(group)}}`).join("");
@@ -894,8 +897,20 @@ function syncControls() {
   controls.paddingValue.value = `${s.padding}px`;
   controls.margin.value = s.margin;
   controls.marginValue.value = `${s.margin}px`;
-  controls.width.value = s.width;
-  controls.widthValue.value = `${s.width}%`;
+  const allowOverflow = Boolean(s.allowOverflow);
+  const widthValue = Number(s.width) || 100;
+  const widthLimit = allowOverflow ? 200 : 100;
+  controls.allowOverflow.checked = allowOverflow;
+  controls.width.max = widthLimit;
+  controls.width.value = Math.min(widthValue, widthLimit);
+  controls.widthValue.value = `${widthValue}%`;
+  buttonWidth.max = widthLimit;
+  buttonWidth.value = Math.min(widthValue, widthLimit);
+  buttonWidthValue.value = element.type === "button" ? `${widthValue}%` : "";
+  imageAllowOverflow.checked = element.type === "image" && allowOverflow;
+  imageWidth.max = widthLimit;
+  imageWidth.value = Math.min(widthValue, widthLimit);
+  imageWidthValue.value = element.type === "image" ? `${widthValue}%` : "";
   controls.borderWidth.value = s.borderWidth;
   controls.borderColor.value = s.borderColor;
   controls.radius.value = s.borderRadius;
@@ -1273,6 +1288,18 @@ spacingDetailFields.forEach((key) => spacingDetailControls[key].input.addEventLi
   updateStyle(key, value);
 }));
 controls.width.addEventListener("input", (event) => updateStyle("width", Number(event.target.value)));
+function updateOverflowAllowed(event) {
+  if (!hasSelection()) return;
+  beginStyleHistory();
+  const element = selectedElement();
+  const allowed = event.target.checked;
+  element.style.allowOverflow = allowed;
+  if (!allowed && Number(element.style.width) > 100) element.style.width = 100;
+  if (!patchPreviewElement(element)) render();
+  syncControls();
+}
+controls.allowOverflow.addEventListener("change", updateOverflowAllowed);
+imageAllowOverflow.addEventListener("change", updateOverflowAllowed);
 controls.borderWidth.addEventListener("change", (event) => updateStyle("borderWidth", Number(event.target.value)));
 controls.borderColor.addEventListener("input", (event) => updateStyle("borderColor", event.target.value));
 controls.radius.addEventListener("input", (event) => updateStyle("borderRadius", Number(event.target.value)));

@@ -348,6 +348,8 @@
           <span class="range-label"><span>幅</span><output id="width-value"></output></span>
           <input id="width" type="range" min="40" max="200" step="1" aria-label="幅" />
         </label>
+          <label class="check-field overflow-toggle"><input id="allow-overflow" type="checkbox" aria-label="パーツを枠の外まで調整" /><span>枠を越えて調整</span></label>
+          <p class="helper-text compact overflow-warning">オンにすると、選択中のパーツを親枠の外まで大きくできます。</p>
 
         <div class="text-position-tool">
           <div class="section-title-row"><strong>パーツの位置</strong><span class="section-hint">並びを変えずに動かす</span></div>
@@ -432,6 +434,8 @@
             <span class="range-hint"><span>小さめ</span><span>大きめ</span></span>
             <input id="image-width" type="range" min="20" max="200" step="1" aria-label="画像の大きさ" />
           </label>
+          <label class="check-field overflow-toggle"><input id="image-allow-overflow" type="checkbox" aria-label="画像を枠の外まで調整" /><span>枠を越えて調整</span></label>
+          <p class="helper-text compact overflow-warning">オンにすると、画像を親枠の外まで大きくできます。</p>
           <label class="field">
             <span class="range-label"><span>外側の余白</span><output id="image-margin-value"></output></span>
             <input id="image-margin" type="range" min="0" max="64" step="1" aria-label="画像の外側の余白" />
