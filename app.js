@@ -743,7 +743,7 @@ function imageAssetPath(element) {
 }
 
 function responsiveCss() {
-  return `@media (max-width: 720px) { .page { padding: 28px 16px !important; } .hero { max-width: 100% !important; } .layout-split, .nested-layout.layout-row { grid-template-columns: minmax(0, 1fr) !important; } .layout-column { min-width: 0; } .button-element { max-width: 100%; } }`;
+  return `@media (max-width: 720px) { .page { padding: 28px 16px !important; } .hero { max-width: 100% !important; } .layout-split, .nested-layout.layout-row { grid-template-columns: minmax(0, 1fr) !important; } .layout-column { min-width: 0; } }`;
 }
 
 function formatCssForSource(css) {
@@ -754,7 +754,7 @@ function formatCssForSource(css) {
 }
 
 function generatedCss({ source = false } = {}) {
-  const elementCss = model.elements.map((element) => `#${element.id} { ${cssFor(element)} }`).join("\n");
+  const elementCss = `.text-element { max-width: none; }\n${model.elements.map((element) => `#${element.id} { ${cssFor(element)} }`).join("\n")}`;
   const layoutRule = layoutDeclaration(model.layoutDirection, model.layoutRatios, model.layoutGap);
   const columnFlex = model.layoutDirection === "column" ? ".layout-column { flex: 0 0 auto; }" : "";
   const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"] { ${layoutDeclaration(group.direction, group.ratios, group.gap)} ${cssForGroup(group)} }`).join("\n");
@@ -763,7 +763,7 @@ function generatedCss({ source = false } = {}) {
 }
 
 function previewDocument() {
-  const elementCss = model.elements.map((element) => `#${element.id}{${cssFor(element)}}`).join("");
+  const elementCss = `.text-element{max-width:none}${model.elements.map((element) => `#${element.id}{${cssFor(element)}}`).join("")}`;
   const layoutRule = layoutDeclaration(model.layoutDirection, model.layoutRatios, model.layoutGap);
   const columnFlex = model.layoutDirection === "column" ? ".layout-column{flex:0 0 auto}" : "";
   const groupCss = model.groups.map((group) => `.nested-layout[data-group-id="${group.id}"]{${layoutDeclaration(group.direction, group.ratios, group.gap)}${cssForGroup(group)}}`).join("");
