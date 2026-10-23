@@ -970,6 +970,8 @@ function syncControls() {
 }
 
 let renderFrameRequest = 0;
+let contentPatchRequest = 0;
+let pendingContentElementId = null;
 
 function render() {
   if (renderFrameRequest) return;
@@ -1033,6 +1035,17 @@ function patchPreviewContent(element) {
     previewElement.textContent = element.content;
   }
   return true;
+}
+
+function schedulePreviewContentPatch(element) {
+  pendingContentElementId = element.id;
+  if (contentPatchRequest) return;
+  contentPatchRequest = requestAnimationFrame(() => {
+    contentPatchRequest = 0;
+    const target = model.elements.find((candidate) => candidate.id === pendingContentElementId);
+    pendingContentElementId = null;
+    if (!target || !patchPreviewContent(target)) render();
+  });
 }
 
 frame.addEventListener("load", () => {
@@ -1203,7 +1216,7 @@ function setupPreviewDragAndDrop() {
   });
 }
 
-controls.content.addEventListener("input", (event) => { if (!hasSelection()) return; beginStyleHistory(); const element = selectedElement(); element.content = event.target.value; if (!patchPreviewContent(element)) render(); });
+controls.content.addEventListener("input", (event) => { if (!hasSelection()) return; beginStyleHistory(); const element = selectedElement(); element.content = event.target.value; schedulePreviewContentPatch(element); });
 controls.textColor.addEventListener("input", (event) => updateStyle("color", event.target.value));
 controls.backgroundColor.addEventListener("input", (event) => { controls.backgroundNone.checked = false; if (hasSelection()) delete selectedElement().style.background; updateStyle("backgroundColor", event.target.value); });
 controls.backgroundNone.addEventListener("change", (event) => {
