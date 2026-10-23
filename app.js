@@ -969,7 +969,17 @@ function syncControls() {
   document.querySelectorAll("[data-button-align]").forEach((button) => button.setAttribute("aria-pressed", String(isButton && (element.style.buttonAlign || "center") === button.dataset.buttonAlign)));
 }
 
+let renderFrameRequest = 0;
+
 function render() {
+  if (renderFrameRequest) return;
+  renderFrameRequest = requestAnimationFrame(() => {
+    renderFrameRequest = 0;
+    renderNow();
+  });
+}
+
+function renderNow() {
   const documentScroller = document.scrollingElement;
   const pageScrollTop = documentScroller?.scrollTop || 0;
   const rightPanel = document.querySelector(".right-panel");
