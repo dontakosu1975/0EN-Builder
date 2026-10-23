@@ -349,7 +349,7 @@ body {
   grid-row: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 14px;
   min-width: 0;
   margin: 0 -18px -12px;
@@ -357,23 +357,7 @@ body {
   border-top: 1px solid rgba(255,255,255,.2);
   background: linear-gradient(160deg, #d7efff 0%, #78add4 47%, #28588f 100%);
 }
-.aero-ribbon-tabs,
 .aero-ribbon-status { display: flex; align-items: center; gap: 6px; }
-.aero-ribbon-tab {
-  padding: 7px 15px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  color: rgba(255,255,255,.72);
-  font-size: .76rem;
-  font-weight: 800;
-  letter-spacing: .04em;
-}
-.aero-ribbon-tab.is-active {
-  border-color: rgba(255,255,255,.42);
-  background: linear-gradient(180deg, #dcecff 0%, #8ba9d3 13%, #426293 52%, #173d78 100%);
-  color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 5px rgba(8, 45, 101, .24);
-}
 .aero-ribbon-status { color: rgba(255,255,255,.76); font-size: .72rem; }
 .aero-ribbon-status i {
   width: 6px;
