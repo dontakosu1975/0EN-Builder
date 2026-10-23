@@ -1536,6 +1536,208 @@ function fileAsDataUrl(file) {
   });
 }
 
+function parseImportedDeclarations(text = "") {
+  return Object.fromEntries(String(text).split(";").map((declaration) => {
+    const separator = declaration.indexOf(":");
+    if (separator < 0) return null;
+    return [declaration.slice(0, separator).trim().toLowerCase(), declaration.slice(separator + 1).trim()];
+  }).filter(([key, value] = []) => key && value));
+}
+
+function importedCssRules(documentNode) {
+  const rules = [];
+  const cssText = [...documentNode.querySelectorAll("style")].map((style) => style.textContent || "").join("\n");
+  const pattern = /([^{}]+)\{([^{}]*)\}/g;
+  let match;
+  while ((match = pattern.exec(cssText))) {
+    const selectors = match[1].trim().split(",").map((selector) => selector.trim()).filter((selector) => selector && !selector.startsWith("@"));
+    if (selectors.length) rules.push({ selectors, declarations: parseImportedDeclarations(match[2]) });
+  }
+  return rules;
+}
+
+function importedStyleFor(node, rules) {
+  const result = {};
+  rules.forEach((rule) => {
+    if (rule.selectors.some((selector) => {
+      try { return node.matches(selector); } catch (error) { return false; }
+    })) Object.assign(result, rule.declarations);
+  });
+  Object.assign(result, parseImportedDeclarations(node.getAttribute("style") || ""));
+  return result;
+}
+
+function importedNumber(value, fallback = null) {
+  const match = String(value ?? "").match(/-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : fallback;
+}
+
+function importedPercent(value, fallback = null) {
+  const match = String(value ?? "").match(/(-?\d+(?:\.\d+)?)\s*%/);
+  return match ? Number(match[1]) : fallback;
+}
+
+function importedBox(value, fallback = 0) {
+  const values = String(value || "").split(/\s+/).map((part) => importedNumber(part)).filter((part) => Number.isFinite(part));
+  if (!values.length) return { top: fallback, right: fallback, bottom: fallback, left: fallback };
+  if (values.length === 1) return { top: values[0], right: values[0], bottom: values[0], left: values[0] };
+  if (values.length === 2) return { top: values[0], right: values[1], bottom: values[0], left: values[1] };
+  if (values.length === 3) return { top: values[0], right: values[1], bottom: values[2], left: values[1] };
+  return { top: values[0], right: values[1], bottom: values[2], left: values[3] };
+}
+
+function importedColors(value) {
+  return String(value || "").match(/#[0-9a-f]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\)|[a-z]+/gi) || [];
+}
+
+function importedStyleOverrides(node, type, rules) {
+  const declarations = importedStyleFor(node, rules);
+  const overrides = {};
+  const setNumber = (key, value, parser = importedNumber) => {
+    const parsed = parser(value);
+    if (Number.isFinite(parsed)) overrides[key] = parsed;
+  };
+  if (declarations.color) overrides.color = declarations.color;
+  if (declarations["background-color"]) overrides.backgroundColor = declarations["background-color"];
+  if (declarations["font-family"]) overrides.fontFamily = declarations["font-family"].split(",")[0].replace(/["']/g, "").trim() || "system";
+  if (declarations["font-size"]) setNumber("fontSize", declarations["font-size"]);
+  if (declarations["font-weight"]) setNumber("fontWeight", declarations["font-weight"]);
+  if (declarations["text-align"] && ["left", "center", "right", "justify"].includes(declarations["text-align"])) overrides.textAlign = declarations["text-align"];
+  if (declarations["line-height"]) setNumber("lineHeight", declarations["line-height"]);
+  if (declarations["letter-spacing"]) setNumber("letterSpacing", declarations["letter-spacing"].replace(/em$/i, ""));
+  if (declarations.padding) {
+    const box = importedBox(declarations.padding);
+    if (box.top === box.right && box.top === box.bottom && box.top === box.left) overrides.padding = box.top;
+    else Object.assign(overrides, { paddingTop: box.top, paddingRight: box.right, paddingBottom: box.bottom, paddingLeft: box.left });
+  }
+  if (declarations.margin) {
+    const box = importedBox(declarations.margin);
+    if (box.top === box.right && box.top === box.bottom && box.top === box.left) overrides.margin = box.top;
+    else Object.assign(overrides, { marginTop: box.top, marginRight: box.right, marginBottom: box.bottom, marginLeft: box.left });
+    if (["heading", "body"].includes(type)) {
+      const marginParts = declarations.margin.split(/\s+/);
+      const marginLeft = marginParts.length === 1 ? marginParts[0] : marginParts.length === 2 ? marginParts[1] : marginParts.length === 3 ? marginParts[1] : marginParts[3];
+      const marginRight = marginParts.length === 1 ? marginParts[0] : marginParts.length === 2 ? marginParts[1] : marginParts.length === 3 ? marginParts[1] : marginParts[1];
+      if (marginLeft === "auto" && marginRight === "auto") overrides.blockAlign = "center";
+      else if (marginLeft === "auto") overrides.blockAlign = "right";
+      else overrides.blockAlign = "left";
+    }
+    if (type === "image" && /auto/.test(declarations.margin)) {
+      const marginParts = declarations.margin.split(/\s+/);
+      const marginLeft = marginParts.length === 1 ? marginParts[0] : marginParts.length === 2 ? marginParts[1] : marginParts.length === 3 ? marginParts[1] : marginParts[3];
+      const marginRight = marginParts.length === 1 ? marginParts[0] : marginParts.length === 2 ? marginParts[1] : marginParts.length === 3 ? marginParts[1] : marginParts[1];
+      overrides.imagePosition = marginLeft === "auto" && marginRight !== "auto" ? "right" : marginRight === "auto" && marginLeft !== "auto" ? "left" : "center";
+    }
+  }
+  if (declarations.width) setNumber("width", declarations.width, importedPercent);
+  if (declarations.height) setNumber("height", declarations.height);
+  if (declarations["min-height"]) setNumber("height", declarations["min-height"]);
+  if (declarations["border-width"]) setNumber("borderWidth", declarations["border-width"]);
+  if (declarations["border-color"]) overrides.borderColor = declarations["border-color"];
+  if (declarations["border-radius"]) setNumber("borderRadius", declarations["border-radius"]);
+  if (declarations["border-style"] && ["none", "solid", "double"].includes(declarations["border-style"])) overrides.borderStyle = declarations["border-style"];
+  if (declarations["object-fit"] && ["contain", "cover", "fill", "none", "scale-down"].includes(declarations["object-fit"])) overrides.objectFit = declarations["object-fit"];
+  if (declarations["object-position"]) overrides.imagePosition = { left: "left", center: "center", right: "right" }[declarations["object-position"].split(/\s+/)[0]] || "center";
+  if (declarations.transform) {
+    const translate = declarations.transform.match(/translate\(\s*(-?\d+(?:\.\d+)?)px\s*,\s*(-?\d+(?:\.\d+)?)px\s*\)/i);
+    if (translate) { overrides.offsetX = Number(translate[1]); overrides.offsetY = Number(translate[2]); }
+  }
+  if (declarations["z-index"]) setNumber("zIndex", declarations["z-index"]);
+  if (declarations["max-width"] === "none") overrides.allowOverflow = true;
+  if (declarations["box-shadow"]) {
+    overrides.shadow = declarations["box-shadow"] === "none" ? "none" : declarations["box-shadow"].includes("28px") ? "strong" : "soft";
+    if (declarations["box-shadow"].includes("inset")) overrides.depth = "inset";
+  }
+  if (type === "image") {
+    if (declarations["object-position"]) overrides.imagePosition = { left: "left", center: "center", right: "right" }[declarations["object-position"].split(/\s+/)[0]] || "center";
+  }
+  return overrides;
+}
+
+function importedGroupStyle(node, rules) {
+  const declarations = importedStyleFor(node, rules);
+  const style = newGroupStyle();
+  if (declarations["background-color"]) style.backgroundColor = declarations["background-color"];
+  if (declarations.padding) style.padding = importedNumber(declarations.padding, style.padding);
+  if (declarations.margin) style.margin = importedNumber(declarations.margin, style.margin);
+  if (declarations["border-width"]) style.borderWidth = importedNumber(declarations["border-width"], style.borderWidth);
+  if (declarations["border-color"]) style.borderColor = declarations["border-color"];
+  if (declarations["border-radius"]) style.borderRadius = importedNumber(declarations["border-radius"], style.borderRadius);
+  if (declarations["border-style"] === "none") style.borderWidth = 0;
+  if (declarations["box-shadow"] && declarations["box-shadow"] !== "none") style.shadow = declarations["box-shadow"].includes("45px") ? "strong" : "soft";
+  const gradient = declarations["background-image"]?.match(/linear-gradient\(\s*(-?\d+(?:\.\d+)?)deg\s*,\s*([^,]+)\s*,\s*([^\)]+)\)/i);
+  if (gradient) style.background = { type: "linear", color: gradient[2].trim(), color2: gradient[3].trim(), angle: Number(gradient[1]) };
+  return style;
+}
+
+function importedLayoutConfig(node, fallbackDirection = "row") {
+  const direction = node.classList.contains("layout-column") ? "column" : node.classList.contains("layout-row") ? "row" : fallbackDirection;
+  const template = importedStyleFor(node, importedCssRules(node.ownerDocument))["grid-template-columns"] || "";
+  const ratios = [...template.matchAll(/(-?\d+(?:\.\d+)?)fr/g)].map((match) => Number(match[1])).filter((value) => value > 0);
+  return { direction, ratios };
+}
+
+function importedElementType(node) {
+  const tag = node.tagName.toLowerCase();
+  if (tag === "img") return "image";
+  if (tag === "hr") return "separator";
+  if (node.matches("a.button-element, button.button-element")) return "button";
+  if (/^h[1-6]$/.test(tag)) return "heading";
+  if (tag === "p" || tag === "ul" || tag === "ol") return "body";
+  return null;
+}
+
+function importedAssetName(src) {
+  return decodeURIComponent(String(src || "").split(/[?#]/)[0].split("/").pop() || "").toLowerCase();
+}
+
+function importedImageFile(src, imageFiles) {
+  const filename = importedAssetName(src);
+  return imageFiles.find((candidate) => candidate.name.toLowerCase() === filename);
+}
+
+function importedMissingImagePlaceholder(label) {
+  const text = escapeHtml(String(label || "画像が見つかりません"));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><rect width="640" height="360" rx="18" fill="#eef3f8"/><path d="M96 270l116-120 90 92 56-58 186 86" fill="none" stroke="#9eb2c7" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><circle cx="450" cy="112" r="28" fill="#9eb2c7"/><rect x="18" y="320" width="604" height="24" rx="12" fill="#d8e2ec"/><text x="30" y="338" fill="#58708a" font-family="system-ui,sans-serif" font-size="14">${text}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function importedRatioFromColumns(columns, rules) {
+  const ratios = columns.map((column) => importedNumber(importedStyleFor(column, rules).flex, null)).filter((value) => Number.isFinite(value) && value > 0);
+  return ratios.length === columns.length ? ratios : columns.map(() => 1);
+}
+
+function importedBaseStyle(type) {
+  if (type === "body") return { color: "#334155", backgroundColor: "#ffffff", fontSize: 18, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.8, letterSpacing: 0, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
+  if (type === "image") return { color: "#18222f", backgroundColor: "transparent", fontSize: 16, fontWeight: 400, textAlign: "left", lineHeight: 1.4, letterSpacing: 0, padding: 0, margin: 16, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, imagePosition: "center", objectFit: "contain", offsetX: 0, offsetY: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" };
+  if (type === "button") return { color: "#ffffff", backgroundColor: "#2563eb", fontSize: 16, fontWeight: 700, textAlign: "center", verticalAlign: "center", lineHeight: 1.4, letterSpacing: 0, padding: 12, margin: 12, width: 48, height: 48, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, buttonAlign: "center", shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" };
+  return structuredClone(initialModel.elements[0].style);
+}
+
+function importedLayoutNode(node) {
+  return node?.matches?.(".nested-layout.layout-split, .layout-split") && node.querySelector(":scope > .layout-column");
+}
+
+function importedLayoutColumns(node) {
+  return [...(node?.children || [])].filter((child) => child.matches?.(":scope, .layout-column") && child.classList.contains("layout-column"));
+}
+
+function importedRatios(node, columns, rules) {
+  const declarations = importedStyleFor(node, rules);
+  const ratios = [...String(declarations["grid-template-columns"] || "").matchAll(/(-?\d+(?:\.\d+)?)fr/g)].map((match) => Number(match[1])).filter((value) => value > 0);
+  return ratios.length === columns.length ? ratios : columns.map(() => 1);
+}
+
+function importedUniqueId(node, type, index, usedIds) {
+  const sourceId = String(node.id || "").trim().replace(/[^a-zA-Z0-9_-]/g, "-");
+  const base = sourceId || `${type}-${index + 1}`;
+  let id = base;
+  let suffix = 2;
+  while (usedIds.has(id)) id = `${base}-${suffix++}`;
+  usedIds.add(id);
+  return id;
+}
+
 loadHtmlFile.addEventListener("change", (event) => {
   const files = [...(event.target.files || [])];
   const file = files.find((candidate) => /\.html?$/i.test(candidate.name)) || files[0];
@@ -1543,39 +1745,91 @@ loadHtmlFile.addEventListener("change", (event) => {
   const reader = new FileReader();
   reader.addEventListener("load", async () => {
     const parsed = new DOMParser().parseFromString(reader.result, "text/html");
-    const imported = [...parsed.body.querySelectorAll("h1,h2,h3,p,img,hr,a.button-element")];
+    const rules = importedCssRules(parsed);
+    const imported = [...parsed.body.querySelectorAll("h1,h2,h3,h4,h5,h6,p,img,hr,a.button-element,button.button-element,ul,ol")];
     if (!imported.length) { showToast("読み込めるパーツがありませんでした"); return; }
     pushHistory();
     model.page.title = parsed.title || file.name.replace(/\.html?$/i, "");
     const imageFiles = files.filter((candidate) => candidate.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg)$/i.test(candidate.name));
     const missingImages = [];
-    model.elements = await Promise.all(imported.map(async (node, index) => {
-      const isImage = node.tagName.toLowerCase() === "img";
-      const isSeparator = node.tagName.toLowerCase() === "hr";
-      const isButton = node.matches("a.button-element");
-      const type = isImage ? "image" : isSeparator ? "separator" : isButton ? "button" : node.tagName.toLowerCase() === "p" ? "body" : "heading";
-      const baseStyle = type === "body"
-        ? { color: "#334155", backgroundColor: "#ffffff", fontSize: 18, fontWeight: 400, textAlign: "left", verticalAlign: "top", lineHeight: 1.8, letterSpacing: 0, padding: 18, margin: 12, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, shadow: "none", depth: "none", borderStyle: "none", glow: "none" }
-        : type === "image"
-          ? { color: "#18222f", backgroundColor: "transparent", fontSize: 16, fontWeight: 400, textAlign: "left", lineHeight: 1.4, letterSpacing: 0, padding: 0, margin: 16, width: 88, borderWidth: 0, borderColor: "#b9d0ff", borderRadius: 12, imagePosition: "center", objectFit: "contain", offsetX: 0, offsetY: 0, shadow: "none", depth: "none", borderStyle: "none", glow: "none" }
-          : type === "button"
-            ? { color: "#ffffff", backgroundColor: "#2563eb", fontSize: 16, fontWeight: 700, textAlign: "center", verticalAlign: "center", lineHeight: 1.4, letterSpacing: 0, padding: 12, margin: 12, width: 48, height: 48, borderWidth: 0, borderColor: "#1d4ed8", borderRadius: 12, buttonAlign: "center", shadow: "soft", depth: "none", borderStyle: "solid", glow: "none" }
-          : structuredClone(initialModel.elements[0].style);
+    const usedIds = new Set();
+    const importedElements = [];
+    const importedGroups = [];
+    const dummyImage = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+    let elementIndex = 0;
+    let groupIndex = 0;
+    const addElement = async (node, groupId, column, group) => {
+      const type = importedElementType(node);
+      if (!type) return;
+      const isImage = type === "image";
+      const isSeparator = type === "separator";
+      const isButton = type === "button";
+      const id = importedUniqueId(node, type, elementIndex++, usedIds);
       let src = isImage ? node.getAttribute("src") || "" : undefined;
       if (isImage && src && !src.startsWith("data:")) {
-        const filename = decodeURIComponent(src.split(/[?#]/)[0].split("/").pop() || "").toLowerCase();
-        const imageFile = imageFiles.find((candidate) => candidate.name.toLowerCase() === filename);
+        const imageFile = importedImageFile(src, imageFiles);
         if (imageFile) src = await fileAsDataUrl(imageFile);
-        else { src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; missingImages.push(filename || "画像"); }
+        else if (!/^https?:\/\//i.test(src)) { missingImages.push(importedAssetName(src) || "画像"); src = dummyImage; }
       }
-      if (isImage && !src) src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-      return { id: `${type}-${index + 1}`, type, column: "left", content: isImage || isSeparator ? "" : node.textContent || "", src, alt: isImage ? node.getAttribute("alt") || "" : undefined, url: isButton ? node.getAttribute("href") || "" : undefined, linkType: isButton && (node.getAttribute("href") || "").startsWith("#") ? "anchor" : "url", anchorId: isButton && (node.getAttribute("href") || "").startsWith("#") ? (node.getAttribute("href") || "").slice(1) : "", target: isButton && node.getAttribute("target") === "_blank" ? "blank" : "same", style: { ...baseStyle, ...(isSeparator ? { height: 0, padding: 0, borderWidth: 1, borderStyle: "solid" } : {}) } };
-    }));
-    model.groups = [];
-    model.columns = ["left"];
-    model.layout = "single";
-    model.layoutDirection = "row";
-    model.layoutRatios = [1];
+      if (isImage && !src) src = dummyImage;
+      const href = isButton ? node.getAttribute("href") || "" : "";
+      const content = isImage || isSeparator ? "" : node.matches("ul,ol") ? [...node.querySelectorAll(":scope > li")].map((item) => item.textContent || "").filter(Boolean).join("\n") : node.textContent || "";
+      const element = { id, type, column, groupId: groupId || null, content, src, alt: isImage ? node.getAttribute("alt") || "" : undefined, format: node.matches("ul,ol") ? "list" : node.querySelector(":scope > strong") ? "strong" : undefined, url: isButton ? href : undefined, linkType: isButton && href.startsWith("#") ? "anchor" : "url", anchorId: isButton && href.startsWith("#") ? href.slice(1) : "", target: isButton && node.getAttribute("target") === "_blank" ? "blank" : "same", style: { ...importedBaseStyle(type), ...importedStyleOverrides(node, type, rules), ...(isSeparator ? { height: 0, padding: 0, borderWidth: 1, borderStyle: "solid" } : {}) } };
+      importedElements.push(element);
+      if (group) group.elementIds.push(id);
+    };
+    const importGroup = async (layoutNode, parentGroupId, parentColumn) => {
+      const columnNodes = importedLayoutColumns(layoutNode);
+      if (!columnNodes.length) return;
+      const groupId = String(layoutNode.dataset.groupId || `layout-group-import-${++groupIndex}`).replace(/[^a-zA-Z0-9_-]/g, "-");
+      const columns = columnNodes.map((columnNode, index) => String(columnNode.dataset.columnId || `${groupId}-column-${index + 1}`).replace(/[^a-zA-Z0-9_-]/g, "-"));
+      const layoutConfig = importedLayoutConfig(layoutNode, "row");
+      const group = { id: groupId, parentGroupId: parentGroupId || null, parentColumn, direction: layoutConfig.direction, ratios: importedRatios(layoutNode, columnNodes, rules), gap: importedNumber(importedStyleFor(layoutNode, rules).gap, model.layoutGap), columns, elementIds: [], style: importedGroupStyle(layoutNode, rules) };
+      importedGroups.push(group);
+      for (let index = 0; index < columnNodes.length; index += 1) await importContainer(columnNodes[index], group.id, columns[index], group);
+    };
+    const importContainer = async (container, groupId, column, group) => {
+      for (const child of [...(container.children || [])]) {
+        if (importedLayoutNode(child)) { await importGroup(child, groupId, column); continue; }
+        if (importedElementType(child)) { await addElement(child, groupId, column, group); continue; }
+        if (child.children?.length) await importContainer(child, groupId, column, group);
+      }
+    };
+    const pageNode = parsed.querySelector(".page");
+    const heroNode = pageNode?.querySelector(":scope > .hero") || parsed.querySelector(".hero");
+    const rootColumns = heroNode ? importedLayoutColumns(heroNode) : [];
+    if (pageNode && heroNode) {
+      const pageStyle = importedStyleFor(pageNode, rules);
+      const pagePadding = importedBox(pageStyle.padding, 48);
+      model.page.paddingY = pagePadding.top;
+      model.page.paddingX = pagePadding.left;
+      if (pageStyle["background-color"]) model.page.backgroundColor = pageStyle["background-color"];
+      const backgroundUrl = pageStyle["background-image"]?.match(/url\(["']?([^"')]+)["']?\)/i)?.[1];
+      if (backgroundUrl) {
+        const backgroundFile = importedImageFile(backgroundUrl, imageFiles);
+        if (backgroundFile) model.page.backgroundImage = await fileAsDataUrl(backgroundFile);
+        else if (/^https?:\/\//i.test(backgroundUrl)) model.page.backgroundImage = backgroundUrl;
+        else { model.page.backgroundImage = ""; missingImages.push(importedAssetName(backgroundUrl) || "ページ背景"); }
+      }
+      const contentWidth = importedNumber(importedStyleFor(heroNode, rules)["max-width"]);
+      if (Number.isFinite(contentWidth)) model.page.contentWidth = contentWidth;
+    }
+    if (rootColumns.length) {
+      model.columns = rootColumns.map((columnNode, index) => String(columnNode.dataset.columnId || (rootColumns.length === 1 ? "left" : `column-${index + 1}`)).replace(/[^a-zA-Z0-9_-]/g, "-"));
+      const layoutConfig = importedLayoutConfig(heroNode, "row");
+      model.layout = rootColumns.length > 1 ? "split" : "single";
+      model.layoutDirection = layoutConfig.direction;
+      model.layoutRatios = importedRatios(heroNode, rootColumns, rules);
+      for (let index = 0; index < rootColumns.length; index += 1) await importContainer(rootColumns[index], null, model.columns[index], null);
+    } else {
+      model.columns = ["left"];
+      model.layout = "single";
+      model.layoutDirection = "row";
+      model.layoutRatios = [1];
+      for (const node of imported) await addElement(node, null, "left", null);
+    }
+    model.elements = importedElements;
+    model.groups = importedGroups;
     model.selectedIds = [model.elements[0].id];
     model.selectedStyle = false;
     model.selectedBackground = false;
