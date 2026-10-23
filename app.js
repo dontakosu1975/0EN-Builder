@@ -1196,7 +1196,16 @@ function setupPreviewDragAndDrop() {
 controls.content.addEventListener("input", (event) => { if (!hasSelection()) return; beginStyleHistory(); const element = selectedElement(); element.content = event.target.value; if (!patchPreviewContent(element)) render(); });
 controls.textColor.addEventListener("input", (event) => updateStyle("color", event.target.value));
 controls.backgroundColor.addEventListener("input", (event) => { controls.backgroundNone.checked = false; if (hasSelection()) delete selectedElement().style.background; updateStyle("backgroundColor", event.target.value); });
-controls.backgroundNone.addEventListener("change", (event) => { if (hasSelection() && event.target.checked) updateStyle("background", { type: "solid", color: "transparent", color2: "transparent", angle: 135 }); updateStyle("backgroundColor", event.target.checked ? "transparent" : controls.backgroundColor.value); });
+controls.backgroundNone.addEventListener("change", (event) => {
+  if (!hasSelection()) return;
+  beginStyleHistory();
+  const element = selectedElement();
+  // 「背景なし」は背景色だけでなく、以前選んだグラデーション情報も解除する。
+  // 残った background があると、transparent にしても background-image が優先されるため。
+  delete element.style.background;
+  element.style.backgroundColor = event.target.checked ? "transparent" : controls.backgroundColor.value;
+  if (!patchPreviewElement(element)) render();
+});
 function updateElementBackground() {
   if (!hasSelection()) return;
   controls.backgroundNone.checked = false;
