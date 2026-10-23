@@ -11,7 +11,7 @@ Visual refresh of the 0EN Builder editor chrome toward the selected “Aero Ribb
 - Implementation viewport: 1440 × 1024 CSS pixels, device scale 1
 - Source image: 1487 × 1058 pixels; comparison is normalized by layout ratio, not pixel-perfect dimensions
 - State: builder editor after the temporary preview submitted the project setup form
-- Note: the screenshot above captures the prior Aero pass (`64caf39`); the follow-up glass-transparency refinement is `e81d7b2` and should be re-captured in the local Edge tab before release.
+- Note: the screenshot above captures the prior Aero pass (`64caf39`); the follow-up refinements (`e81d7b2`, then corrective opaque styling `45981e0`) should be re-captured in the local Edge tab before release.
 
 ## Comparison
 
