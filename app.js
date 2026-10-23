@@ -1028,7 +1028,7 @@ function patchPreviewContent(element) {
 frame.addEventListener("load", () => {
   const selectionStyle = frame.contentDocument?.createElement("style");
   if (selectionStyle) {
-    selectionStyle.textContent = ".text-element.is-selected{outline:2px solid #5f8ee8!important;outline-offset:5px!important}.text-element.is-selected-2{outline-color:#2563eb!important}.text-element.is-selected-3{outline-color:#7c3aed!important}";
+    selectionStyle.textContent = ".text-element.is-selected{outline:2px solid #5f8ee8!important;outline-offset:1px!important;box-shadow:0 0 0 1px rgba(95,142,232,.2)!important}.text-element.is-selected-2{outline-color:#2563eb!important}.text-element.is-selected-3{outline-color:#7c3aed!important}";
     frame.contentDocument.head.appendChild(selectionStyle);
   }
   const id = selectionCount() === 1 ? model.selectedIds[0] : null;
@@ -1038,7 +1038,7 @@ frame.addEventListener("load", () => {
 });
 
 const rawPreviewDocument = previewDocument;
-previewDocument = () => rawPreviewDocument().replace(".text-element.is-selected{outline:3px solid #111827;outline-offset:6px}", ".text-element.is-selected{outline:2px solid #5f8ee8;outline-offset:5px}");
+previewDocument = () => rawPreviewDocument().replace(".text-element.is-selected{outline:3px solid #111827;outline-offset:6px}", ".text-element.is-selected{outline:2px solid #5f8ee8;outline-offset:1px;box-shadow:0 0 0 1px rgba(95,142,232,.2)}");
 const basePreviewDocument = previewDocument;
 const previewDragScript = `
 (function(){

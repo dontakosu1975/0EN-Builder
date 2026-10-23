@@ -296,11 +296,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 :root {
   --ink: #102b4d;
   --muted: #5d7391;
-  --line: rgba(144, 180, 218, .58);
-  --surface: rgba(255, 255, 255, .52);
-  --soft: rgba(233, 244, 255, .56);
+  --line: #a8c8e4;
+  --surface: #f4fbff;
+  --soft: #e7f3ff;
   --accent: #1675e8;
-  --accent-soft: rgba(216, 237, 255, .92);
+  --accent-soft: #d8edff;
   --shadow: 0 18px 46px rgba(35, 92, 150, .12);
   --app-header-height: 138px;
 }
@@ -308,9 +308,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 body {
   background: #e9f4ff;
   background-image:
-    radial-gradient(circle at 12% 4%, rgba(255,255,255,.92), transparent 34%),
-    radial-gradient(circle at 88% 12%, rgba(190,228,255,.62), transparent 31%),
-    linear-gradient(135deg, rgba(255,255,255,.62), rgba(222,239,255,.5) 45%, rgba(244,235,255,.46));
+    radial-gradient(circle at 12% 4%, #ffffff 0%, #edf8ff 34%, transparent 35%),
+    radial-gradient(circle at 88% 12%, #cfeaff 0%, #e8f5ff 31%, transparent 32%),
+    linear-gradient(135deg, #f8fcff, #dcefff 45%, #f1ebff);
 }
 
 .app-header {
@@ -320,10 +320,10 @@ body {
   grid-template-rows: auto auto;
   padding: 12px 18px;
   border-bottom: 1px solid rgba(190, 224, 255, .72);
-  background: linear-gradient(180deg, rgba(38, 137, 213, .72), rgba(11, 73, 143, .58));
+  background: linear-gradient(180deg, #5ca4d6 0%, #347fbe 48%, #1c5d99 100%);
   box-shadow: 0 8px 24px rgba(14, 78, 140, .16), inset 0 1px 0 rgba(255,255,255,.52);
-  backdrop-filter: blur(24px) saturate(145%);
   overflow: hidden;
+  backdrop-filter: none;
 }
 
 .app-header::after {
@@ -411,10 +411,10 @@ body {
 .page-settings {
   top: var(--app-header-height);
   border-bottom-color: rgba(147, 197, 241, .68);
-  background: rgba(35, 123, 207, .64);
+  background: linear-gradient(180deg, #4d98ce, #2c73b0);
   color: #fff;
   box-shadow: 0 12px 28px rgba(14, 78, 140, .2);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
 }
 .page-settings .eyebrow,
 .page-settings h2,
@@ -431,16 +431,16 @@ body {
 .canvas-column {
   border-color: rgba(159, 195, 229, .72);
   border-radius: 18px;
-  background: linear-gradient(145deg, rgba(255,255,255,.68), rgba(225,242,255,.38));
+  background: linear-gradient(145deg, #fbfdff 0%, #e5f2fc 100%);
   box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.74);
-  backdrop-filter: blur(18px);
+  backdrop-filter: none;
+  isolation: isolate;
 }
 .left-panel {
   padding: 16px 12px 56px;
-  background: linear-gradient(155deg, rgba(45, 148, 220, .68), rgba(12, 85, 163, .52));
+  background: linear-gradient(155deg, #62abdc 0%, #2b7fc0 48%, #1b63a5 100%);
   border-color: rgba(190, 226, 255, .66);
   box-shadow: 0 18px 42px rgba(24, 92, 151, .16), inset 0 1px 0 rgba(255,255,255,.48);
-  backdrop-filter: blur(24px) saturate(145%);
 }
 .left-panel .eyebrow,
 .left-panel .section-title-row h3,
@@ -449,7 +449,7 @@ body {
 .left-panel .part-card,
 .left-panel .layout-card {
   border-color: rgba(255,255,255,.42);
-  background: rgba(255,255,255,.14);
+  background: #4f98d0;
   color: #fff;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
 }
@@ -462,31 +462,29 @@ body {
 .left-panel .layout-card:hover,
 .left-panel .layout-card[aria-expanded="true"] {
   border-color: rgba(255,255,255,.78);
-  background: rgba(255,255,255,.24);
+  background: #68addf;
   transform: translateY(-1px);
 }
-.left-panel .layout-popover { border-color: rgba(151,194,235,.7); background: rgba(245,251,255,.96); }
-.left-panel .quiet-button { border-color: rgba(255,255,255,.36); background: rgba(255,255,255,.1); color: rgba(255,255,255,.78); }
+.left-panel .layout-popover { border-color: #97c2eb; background: #f5fbff; }
+.left-panel .quiet-button { border-color: #8fc0e8; background: #3f87bf; color: #eef8ff; }
 
 .canvas-column { overflow: hidden; }
 .canvas-toolbar {
   padding: 14px 18px;
   border-bottom: 1px solid rgba(159, 195, 229, .5);
-  background: rgba(248, 252, 255, .46);
-  backdrop-filter: blur(16px);
+  background: linear-gradient(180deg, #f8fcff, #e0effb);
 }
 .canvas-toolbar .eyebrow { color: #347fca; }
-.preview-viewport-switch { border-color: rgba(143,183,223,.65); background: rgba(231,243,255,.86); }
+.preview-viewport-switch { border-color: #8fb7df; background: #e7f3ff; }
 .preview-viewport-switch button[aria-pressed="true"] { background: #1675e8; box-shadow: 0 4px 10px rgba(22,117,232,.24); }
 .status-pill { background: #dff1ff; color: #075a9f; }
-.preview-frame-wrap { background: rgba(199, 225, 249, .44); border-color: rgba(159,195,229,.42); }
+.preview-frame-wrap { background: linear-gradient(145deg, #e0f1ff, #cfe5f6); border-color: #9fc3e5; }
 #preview-frame { border-radius: 12px; box-shadow: 0 10px 28px rgba(37,83,127,.14); }
 
 .right-panel {
   padding: 16px 14px 56px;
   gap: 12px;
-  background: linear-gradient(145deg, rgba(245,252,255,.64), rgba(211,235,255,.38));
-  backdrop-filter: blur(24px) saturate(145%);
+  background: linear-gradient(145deg, #f8fcff 0%, #d8ebf9 100%);
 }
 .right-panel .panel-heading { padding: 0 4px; }
 .right-panel .eyebrow { color: #347fca; }
@@ -501,7 +499,7 @@ select,
 .gradient-tool,
 .responsive-font-size-tools {
   border-color: rgba(153, 190, 224, .7);
-  background: rgba(248, 252, 255, .78);
+  background: #f8fcff;
 }
 .choice-grid button,
 .segmented,
@@ -509,7 +507,7 @@ select,
 .layout-actions button,
 .section-template-grid button {
   border-color: rgba(153, 190, 224, .62);
-  background: rgba(232, 244, 255, .72);
+  background: #e8f4ff;
 }
 .choice-grid button:hover,
 .choice-grid button[aria-pressed="true"],
@@ -523,9 +521,9 @@ select,
 }
 .builder-footer {
   border-top-color: rgba(158, 195, 228, .72);
-  background: rgba(239, 248, 255, .9);
+  background: #eff8ff;
   box-shadow: 0 -6px 20px rgba(37, 83, 127, .12);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
 }
 .footer-status i { background: #2588e8; box-shadow: 0 0 8px rgba(37,136,232,.5); }
 
@@ -533,7 +531,7 @@ select,
   .app-header {
     height: auto;
     display: flex;
-    background: rgba(15, 94, 171, .96);
+    background: linear-gradient(180deg, #5ca4d6, #1c5d99);
   }
   .aero-ribbon { width: 100%; }
   .aero-ribbon-status { display: none; }
